@@ -8,6 +8,10 @@ author = "Thomas Kluyver"
 author-email = "thomas@kluyver.me.uk"
 home-page = "https://github.com/takluyver/h5glance"
 description-file = "README.rst"
+requires = [
+    "h5py",
+    "htmlgen",
+]
 classifiers = ["License :: OSI Approved :: MIT License"]
 
 [tool.flit.scripts]
