@@ -11,6 +11,11 @@
 	list-style: none;
 }
 
+/* Override padding from Jupyter CSS */
+.rendered_html .h5glance-css-treeview ul {
+    padding: 0;
+}
+
 .h5glance-css-treeview input
 {
 	position: absolute;
