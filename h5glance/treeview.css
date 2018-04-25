@@ -25,6 +25,11 @@
 	user-select: none;
 }
 
+.h5glance-css-treeview code {
+    font-size: 12pt;
+    font-family: "courier", monospace;
+}
+
 .h5glance-css-treeview a
 {
 	color: #00f;
@@ -101,4 +106,12 @@
 			padding: 0;
 		}
 	}
+}
+
+.h5glance-css-treeview li.h5glance-dataset {
+    margin-bottom: 3px;
+}
+
+.h5glance-dataset-name {
+    font-weight: bold;
 }
