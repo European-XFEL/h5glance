@@ -88,12 +88,18 @@ def item_for_group(gname, grp):
         *[item_for_dataset(n, d) for n, d in datasets],
     ))
 
-def make_fragment(obj):
+def file_or_grp_name(obj):
     if isinstance(obj, h5py.File):
-        ct = make_list(item_for_group(obj.filename, obj))
+        return obj.filename
     elif isinstance(obj, h5py.Group):
-        ct = make_list(item_for_group(obj.name, obj))
-    elif isinstance(obj, str) and h5py.is_hdf5(obj):
+        return obj.name
+    return obj
+
+def make_fragment(obj):
+    if isinstance(obj, h5py.Group):
+        name = file_or_grp_name(obj)
+        ct = make_list(item_for_group(name, obj))
+    elif isinstance(obj, (str, Path)) and h5py.is_hdf5(obj):
         with h5py.File(obj, 'r') as f:
             return make_fragment(f)
     else:
@@ -114,6 +120,7 @@ def get_treeview_css():
 def make_document(obj):
     d = Document()
     d.append_head(get_treeview_css())
+    d.title = "{} - H5Glance".format(file_or_grp_name(obj))
     d.append_body(make_fragment(obj))
     return d
 
