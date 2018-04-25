@@ -31,7 +31,7 @@ def item_for_dataset(name, ds):
 
 def item_for_group(gname, grp):
     subgroups, datasets = [], []
-    for name, obj in grp.items():
+    for name, obj in sorted(grp.items()):
         if isinstance(obj, h5py.Group):
             subgroups.append((name, obj))
         else:
@@ -42,19 +42,46 @@ def item_for_group(gname, grp):
         *[item_for_dataset(n, d) for n, d in datasets],
     ))
 
-def main():
-    d = Document()
+def make_fragment(obj):
+    if isinstance(obj, h5py.File):
+        ct = make_list(item_for_group(obj.filename, obj))
+    elif isinstance(obj, h5py.Group):
+        ct = make_list(item_for_group(obj.name, obj))
+    elif isinstance(obj, str) and h5py.is_hdf5(obj):
+        with h5py.File(obj, 'r') as f:
+            return make_fragment(f)
+    else:
+        raise TypeError("Unknown object type: {!r}".format(obj))
+
+    # Expand first level
+    first_chkbx = ct.children.children[0].children.children[0] # Yuck
+    first_chkbx.checked = True
+
+    tv = Division(ct)
+    tv.add_css_classes("h5glance-css-treeview")
+    return tv
+
+def get_treeview_css():
     with (_PKGDIR / 'treeview.css').open() as f:
-        d.append_head(Style(f.read()))
+        return Style(f.read())
 
-    filename = sys.argv[1]
-    with h5py.File(filename, 'r') as f:
-        tv = Division(make_list(item_for_group(filename, f)))
-    tv.add_css_classes("css-treeview")
-    d.append_body(tv)
+def make_document(obj):
+    d = Document()
+    d.append_head(get_treeview_css())
+    d.append_body(make_fragment(obj))
+    return d
 
-    with open("test_output.html", 'w') as f:
-        f.write(str(d))
+def h5obj_to_html(obj):
+    div = Division(
+        get_treeview_css(),
+        make_fragment(obj),
+    )
+    return str(div)
 
-if __name__ == '__main__':
-    main()
+class H5Glance:
+    """View an HDF5 object in a Jupyter notebook"""
+    def __init__(self, obj):
+        self.obj = obj
+
+    def _repr_html_(self):
+        return h5obj_to_html(self.obj)

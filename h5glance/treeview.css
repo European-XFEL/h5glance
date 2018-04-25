@@ -2,8 +2,8 @@
    Reused with permission from https://css-tricks.com/license/
 */
 
-.css-treeview ul,
-.css-treeview li
+.h5glance-css-treeview ul,
+.h5glance-css-treeview li
 {
 	padding: 0;
 	margin: 0;
@@ -11,13 +11,13 @@
 	list-style: none;
 }
 
-.css-treeview input
+.h5glance-css-treeview input
 {
 	position: absolute;
 	opacity: 0;
 }
 
-.css-treeview
+.h5glance-css-treeview
 {
     font-family: sans-serif;
 	-moz-user-select: none;
@@ -25,36 +25,36 @@
 	user-select: none;
 }
 
-.css-treeview a
+.h5glance-css-treeview a
 {
 	color: #00f;
 	text-decoration: none;
 }
 
-.css-treeview a:hover
+.h5glance-css-treeview a:hover
 {
 	text-decoration: underline;
 }
 
-.css-treeview input + label + ul
+.h5glance-css-treeview input + label + ul
 {
 	display: none;
 }
 
-.css-treeview input:disabled + label
+.h5glance-css-treeview input:disabled + label
 {
 	cursor: default;
 	opacity: .6;
 }
 
-.css-treeview input:checked:not(:disabled) + label + ul
+.h5glance-css-treeview input:checked:not(:disabled) + label + ul
 {
 	display: block;
 }
 
-.css-treeview label,
-.css-treeview a,
-.css-treeview label::before
+.h5glance-css-treeview label,
+.h5glance-css-treeview a,
+.h5glance-css-treeview label::before
 {
 	display: inline-block;
 	height: 16px;
@@ -62,13 +62,13 @@
 	vertical-align: middle;
 }
 
-.css-treeview label
+.h5glance-css-treeview label
 {
 	background-position: 18px 0;
     margin-left: -1.5em;
 }
 
-.css-treeview label::before
+.h5glance-css-treeview label::before
 {
 	content: "+";
 	width: 1.5em;
@@ -76,7 +76,7 @@
 	background-position: 0 -32px;
 }
 
-.css-treeview input:checked + label::before
+.h5glance-css-treeview input:checked + label::before
 {
     content: "–";
 	background-position: 0 -16px;
@@ -85,7 +85,7 @@
 /* webkit adjacent element selector bugfix */
 @media screen and (-webkit-min-device-pixel-ratio:0)
 {
-	.css-treeview
+	.h5glance-css-treeview
 	{
 		-webkit-animation: webkit-adjacent-element-selector-bugfix infinite 1s;
 	}
