@@ -1,6 +1,6 @@
 import h5py
 from htmlgen import (Document, Element, Division, UnorderedList, Checkbox,
-                     Label, ListItem, html_attribute, Span,
+                     Label, ListItem, html_attribute, Span, Link, Script,
                      )
 from pathlib import Path
 
@@ -68,8 +68,11 @@ def item_for_dataset(name, ds):
     shape = " × ".join(str(n) for n in ds.shape)
     namespan = Span(name)
     namespan.add_css_classes("h5glance-dataset-name")
+    copylink = Link("#", "[📋]")
+    copylink.set_attribute("data-hdf5-path", ds.name)
+    copylink.add_css_classes("h5glance-dataset-copylink")
     li = ListItem(
-        namespan, ": ",
+        namespan,  " ", copylink, ": ",
         shape, " entries, dtype: ", make_dtype_abbr(ds.dtype)
     )
     li.add_css_classes("h5glance-dataset")
@@ -95,6 +98,14 @@ def file_or_grp_name(obj):
         return obj.name
     return obj
 
+def make_treeview_ids():
+    n = 0
+    while True:
+        yield "h5glance-container-%d" % n
+        n += 1
+
+treeview_ids = make_treeview_ids()
+
 def make_fragment(obj):
     if isinstance(obj, h5py.Group):
         name = file_or_grp_name(obj)
@@ -111,23 +122,43 @@ def make_fragment(obj):
 
     tv = Division(ct)
     tv.add_css_classes("h5glance-css-treeview")
+    tv.id = next(treeview_ids)
     return tv
 
 def get_treeview_css():
     with (_PKGDIR / 'treeview.css').open() as f:
         return Style(f.read())
 
+JS_ACTIVATE_COPYLINKS_DOC = """
+window.addEventListener("load", function(event) {
+  enable_copylinks(document);
+});
+"""
+
+JS_ACTIVATE_COPYLINKS_FRAG = """
+enable_copylinks(document.getElementById("TREEVIEW-ID"));
+"""
+
+def get_copylinks_js(activation):
+    with (_PKGDIR / "copypath.js").open() as f:
+        return f.read().replace("//ACTIVATE", activation)
+
 def make_document(obj):
     d = Document()
     d.append_head(get_treeview_css())
+    d.append_head(Script(script=get_copylinks_js(JS_ACTIVATE_COPYLINKS_DOC)))
     d.title = "{} - H5Glance".format(file_or_grp_name(obj))
     d.append_body(make_fragment(obj))
     return d
 
 def h5obj_to_html(obj):
+    treeview = make_fragment(obj)
+    js_activate = JS_ACTIVATE_COPYLINKS_FRAG.replace("TREEVIEW-ID", treeview.id)
+
     div = Division(
         get_treeview_css(),
-        make_fragment(obj),
+        treeview,
+        Script(script=get_copylinks_js(js_activate)),
     )
     return str(div)
 

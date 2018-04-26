@@ -46,6 +46,11 @@
 	text-decoration: underline;
 }
 
+.h5glance-css-treeview a.h5glance-dataset-copylink
+{
+    text-decoration: none;
+}
+
 .h5glance-css-treeview input + label + ul
 {
 	display: none;
