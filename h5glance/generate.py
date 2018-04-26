@@ -26,6 +26,12 @@ class Code(Element):
         super().__init__("code")
         self.extend(content)
 
+def id_generator(template):
+    n = 0
+    while True:
+        yield template % n
+        n += 1
+
 dtype_kind_to_descr = {
     "u": "unsigned integer",
     "i": "signed integer",
@@ -53,13 +59,11 @@ def make_list(*items):
     ul.extend(items)
     return ul
 
-checkbox_id_no = [0]
+checkbox_ids = id_generator("h5glance-expand-switch-%d")
 
 def checkbox_w_label(label_content):
     c = Checkbox()
-    id_no = checkbox_id_no[0]
-    checkbox_id_no[0] += 1
-    c.id = "item-%d" % id_no
+    c.id = next(checkbox_ids)
     l = Label(label_content)
     l.for_ = c.id
     return [c, l]
@@ -98,13 +102,7 @@ def file_or_grp_name(obj):
         return obj.name
     return obj
 
-def make_treeview_ids():
-    n = 0
-    while True:
-        yield "h5glance-container-%d" % n
-        n += 1
-
-treeview_ids = make_treeview_ids()
+treeview_ids = id_generator("h5glance-container-%d")
 
 def make_fragment(obj):
     if isinstance(obj, h5py.Group):
