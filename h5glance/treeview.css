@@ -16,6 +16,7 @@
     padding: 0;
 }
 
+/* Make the checkbox itself invisible */
 .h5glance-css-treeview input
 {
 	position: absolute;
@@ -35,31 +36,15 @@
     font-family: "courier", monospace;
 }
 
-.h5glance-css-treeview a
-{
-	color: #00f;
-	text-decoration: none;
-}
-
-.h5glance-css-treeview a:hover
-{
-	text-decoration: underline;
-}
-
 .h5glance-css-treeview a.h5glance-dataset-copylink
 {
     text-decoration: none;
 }
 
+/* These next two bits drive the expanding/collapsing behaviour */
 .h5glance-css-treeview input + label + ul
 {
 	display: none;
-}
-
-.h5glance-css-treeview input:disabled + label
-{
-	cursor: default;
-	opacity: .6;
 }
 
 .h5glance-css-treeview input:checked:not(:disabled) + label + ul
@@ -68,7 +53,6 @@
 }
 
 .h5glance-css-treeview label,
-.h5glance-css-treeview a,
 .h5glance-css-treeview label::before
 {
 	display: inline-block;
@@ -79,7 +63,6 @@
 
 .h5glance-css-treeview label
 {
-	background-position: 18px 0;
     margin-left: -1.5em;
 }
 
@@ -88,13 +71,11 @@
 	content: "+";
 	width: 1.5em;
 	vertical-align: middle;
-	background-position: 0 -32px;
 }
 
 .h5glance-css-treeview input:checked + label::before
 {
     content: "–";
-	background-position: 0 -16px;
 }
 
 /* webkit adjacent element selector bugfix */
