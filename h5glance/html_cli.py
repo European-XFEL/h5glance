@@ -1,3 +1,5 @@
+"""Command line h5glance-html interface for writing and serving HTML views of HDF5
+"""
 import argparse
 import h5py
 from http.server import HTTPServer, BaseHTTPRequestHandler
