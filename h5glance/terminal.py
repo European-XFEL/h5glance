@@ -121,12 +121,15 @@ def prompt_for_path(filename):
 
 
 def main(argv=None):
+    from . import __version__
     ap = argparse.ArgumentParser(prog="h5glance",
              description="View HDF5 file structure in the terminal")
     ap.add_argument("file", help="HDF5 file to view", type=Path)
     ap.add_argument("path", nargs='?',
         help="Object to show within the file, or '-' to prompt for a name"
     )
+    ap.add_argument('--version', action='version',
+                    version='H5glance {}'.format(__version__))
 
     args = ap.parse_args(argv)
 
