@@ -4,19 +4,53 @@ import argparse
 import h5py
 import io
 import os
-import shlex
+import numpy
 from pathlib import Path
+import shlex
 from shutil import get_terminal_size
 from subprocess import run
 import sys
 
+def fmt_shape(shape):
+    return " × ".join(('Unlimited' if n is None else str(n)) for n in shape)
+
+layout_names = {
+    h5py.h5d.COMPACT: 'Compact',
+    h5py.h5d.CONTIGUOUS: 'Contiguous',
+    h5py.h5d.CHUNKED: 'Chunked',
+    h5py.h5d.VIRTUAL: 'Virtual',
+}
+
+def print_dataset_info(ds: h5py.Dataset, file=None):
+    """Print detailed information for an HDF5 dataset."""
+    print('      dtype:', ds.dtype.name, file=file)
+    print('      shape:', fmt_shape(ds.shape), file=file)
+    print('   maxshape:', fmt_shape(ds.maxshape), file=file)
+    layout = ds.id.get_create_plist().get_layout()
+    print('     layout:', layout_names.get(layout, 'Unknown'), file=file)
+    if layout == h5py.h5d.CHUNKED:
+        print('      chunk:', fmt_shape(ds.chunks), file=file)
+        print('compression: {} (options: {})'
+              .format(ds.compression, ds.compression_opts), file=file)
+
+    if sys.stdout.isatty():
+        numpy.set_printoptions(linewidth=get_terminal_size()[0])
+
+    print('\nsample data:', file=file)
+    if ds.ndim == 0:
+        print(ds[()], file=file)
+    elif ds.ndim == 1:
+        print(ds[:10], file=file)
+    else:
+        select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
+        print(ds[select], file=file)
+
 def detail_for(obj):
-    """Detail for an HDF5 object, to display by its name in the tree view.
-    """
+    """Detail for an HDF5 object, to display by its name in the tree view."""
     if isinstance(obj, h5py.Dataset):
         detail = '\t[{dt}: {shape}]'.format(
             dt=obj.dtype.name,
-            shape=" × ".join(str(n) for n in obj.shape),
+            shape=fmt_shape(obj.shape),
         )
         if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
             detail += ' virtual'
@@ -59,8 +93,10 @@ def display_h5_obj(file: h5py.File, path=None):
 
     if isinstance(obj, h5py.Group):
         print_paths(obj, file=sio)
+    elif isinstance(obj, h5py.Dataset):
+        print_dataset_info(obj, file=sio)
     else:
-        print(detail_for(obj), file=sio)
+        print("What is this?", repr(obj), file=sio)
 
     # If the output has more lines than the terminal, display it in a pager
     output = sio.getvalue()
