@@ -15,3 +15,12 @@ def test_dataset_info(simple_h5_file):
     out = sio.getvalue()
     assert 'dtype: float32' in out
     assert 'shape: 2 × 128 × 500' in out
+
+def test_completer(simple_h5_file):
+    comp = terminal.H5Completer(simple_h5_file)
+    # Complete groups
+    assert set(comp.completions('group1/sub')) == {'group1/subgroup1/', 'group1/subgroup2/'}
+    # Complete a dataset - no trailing slash
+    assert set(comp.completions('group1/subgroup2/')) == {'group1/subgroup2/dataset1'}
+    # Case insensitive completion
+    assert set(comp.completions('GRO')) == {'group1/'}
