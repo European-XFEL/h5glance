@@ -45,8 +45,13 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
         select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
         print(ds[select], file=file)
 
-def detail_for(obj):
+def detail_for(obj, link):
     """Detail for an HDF5 object, to display by its name in the tree view."""
+    if isinstance(link, h5py.SoftLink):
+        return '\t-> {}'.format(link.path)
+    elif isinstance(link, h5py.ExternalLink):
+        return '\t-> {}/{}'.format(link.filename, link.path)
+
     if isinstance(obj, h5py.Dataset):
         detail = '\t[{dt}: {shape}]'.format(
             dt=obj.dtype.name,
@@ -65,7 +70,8 @@ def print_paths(group, prefix='', file=None):
     nkeys = len(group.keys())
     for i, (k, obj) in enumerate(group.items()):
         islast = (nkeys == i + 1)
-        print(prefix, ('└' if islast else '├'), k, detail_for(obj),
+        link = group.get(k, getlink=True)
+        print(prefix, ('└' if islast else '├'), k, detail_for(obj, link),
               sep='', file=file)
         if isinstance(obj, h5py.Group):
             print_paths(obj, prefix + ('  ' if islast else '│ '), file=file)
