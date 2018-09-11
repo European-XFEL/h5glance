@@ -1,5 +1,8 @@
 **H5Glance** lets you explore HDF5 files in the terminal or an HTML interface.
 
+.. image:: https://travis-ci.org/European-XFEL/h5glance.svg?branch=master
+    :target: https://travis-ci.org/European-XFEL/h5glance
+
 In the terminal, you can get a tree view of a file::
 
     $ h5glance sample.h5
