@@ -54,19 +54,22 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
         select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
         print(ds[select], file=file)
 
-    nattr = len(ds.attrs)
-    if nattr > 0:
-        print('\n{} attributes:'.format(nattr), file=file)
-        for k, v in ds.attrs.items():
-            print('* ', k, ': ', fmt_attr(v), sep='', file=file)
+    print('\n{} attributes:'.format(len(ds.attrs)), file=file)
+    for k, v in ds.attrs.items():
+        print('* ', k, ': ', fmt_attr(v), sep='', file=file)
 
+def object_tree_node(obj, name, expand_attrs=False):
+    """Build a tree node for an HDF5 group/dataset
+    """
+    children = []
+    detail = attr_detail = ''
 
-def detail_for(obj, link, inc_n_attrs=False):
-    """Detail for an HDF5 object, to display by its name in the tree view."""
-    if isinstance(link, h5py.SoftLink):
-        return '\t-> {}'.format(link.path)
-    elif isinstance(link, h5py.ExternalLink):
-        return '\t-> {}/{}'.format(link.filename, link.path)
+    if expand_attrs:
+        children += attrs_tree_nodes(obj)
+    else:
+        n = len(obj.attrs)
+        if n:
+            attr_detail = ' ({} attributes)'.format(n)
 
     if isinstance(obj, h5py.Dataset):
         detail = '\t[{dt}: {shape}]'.format(
@@ -76,48 +79,48 @@ def detail_for(obj, link, inc_n_attrs=False):
         if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
             detail += ' virtual'
     elif isinstance(obj, h5py.Group):
-        detail = ''
+        children += [group_item_tree_node(obj, key, expand_attrs=expand_attrs)
+                     for key in obj]
     else:
-        return ' (unknown h5py type)'
+        detail = ' (unknown h5py type)'
 
-    if inc_n_attrs:
-        n = len(obj.attrs)
-        if n:
-            detail += ' ({} attributes)'.format(n)
+    return name + detail + attr_detail, children
 
-    return detail
+def group_item_tree_node(group, key, expand_attrs=False):
+    """Build a tree node for one key in a group"""
+    link = group.get(key, getlink=True)
+    if isinstance(link, h5py.SoftLink):
+        return '{}\t-> {}'.format(key, link.path), []
+    elif isinstance(link, h5py.ExternalLink):
+        return '{}\t-> {}/{}'.format(key, link.filename, link.path), []
+    else:
+        return object_tree_node(group[key], key, expand_attrs=expand_attrs)
 
-def print_group_attrs(group, prefix='', file=None):
-    nattr = len(group.attrs)
+def attrs_tree_nodes(obj):
+    """Build tree nodes for attributes"""
+    nattr = len(obj.attrs)
     if not nattr:
-        return
+        return []
 
-    grp_empty = len(group) == 0
-    print(prefix, ('└' if grp_empty else '├'), nattr, ' attributes:',
-          sep='', file=file)
+    children = [('{}: {}'.format(k, fmt_attr(v)), [])
+                for (k, v) in obj.attrs.items()]
+    return [('{} attributes:'.format(nattr), children)]
 
-    prefix += ('  ' if grp_empty else '│ ')
-    for i, (k, v) in enumerate(group.attrs.items()):
-        islast = (nattr == i + 1)
-        print(prefix, ('└' if islast else '├'), k, ': ', fmt_attr(v),
-              sep='', file=file)
+def print_tree(node, prefix1='', prefix2='', file=None):
+    """Render a tree to show in the terminal.
 
-def print_paths(group, prefix='', file=None, expand_attrs=False):
-    """Visit and print name of all element in HDF5 file (from S Hauf)"""
-    nkeys = len(group.keys())
-    for i, (k, obj) in enumerate(group.items()):
-        islast = (nkeys == i + 1)
-        link = group.get(k, getlink=True)
-        detail = detail_for(obj, link, inc_n_attrs=(not expand_attrs))
-        print(prefix, ('└' if islast else '├'), k, detail,
-              sep='', file=file)
+    Each tree node consists of a line of text to be displayed
+    and a list of child nodes.
+    """
+    root, children = node
+    print(prefix1 + root, file=file)
 
-        # Recurse into groups, but not soft links to groups
-        if isinstance(obj, h5py.Group) and isinstance(link, h5py.HardLink):
-            if expand_attrs:
-                print_group_attrs(obj, prefix + ('  ' if islast else '│ '), file=file)
-            print_paths(obj, prefix + ('  ' if islast else '│ '), file=file,
-                        expand_attrs=expand_attrs)
+    nchild = len(children)
+    for i, node in enumerate(children):
+        islast = (nchild == i + 1)
+        c_prefix1 = prefix2 + ('└'  if islast else '├')
+        c_prefix2 = prefix2 + ('  ' if islast else '│ ')
+        print_tree(node, prefix1=c_prefix1, prefix2=c_prefix2, file=file)
 
 def page(text):
     """Display text in a terminal pager
@@ -134,20 +137,20 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
     """
     sio = io.StringIO()
     if path:
-        print(file.filename + '/' + path.lstrip('/'), file=sio)
+        root = file.filename + '/' + path.lstrip('/')
         obj = file[path]
     else:
-        print(file.filename, file=sio)
+        root = file.filename
         obj = file
 
     if isinstance(obj, h5py.Group):
-        if expand_attrs:
-            print_group_attrs(obj, file=sio)
-        print_paths(obj, file=sio, expand_attrs=expand_attrs)
+        print_tree(object_tree_node(obj, root, expand_attrs=expand_attrs),
+                   file=sio)
     elif isinstance(obj, h5py.Dataset):
+        print(root, file=sio)
         print_dataset_info(obj, file=sio)
     else:
-        print("What is this?", repr(obj), file=sio)
+        sys.exit("What is this? " + repr(obj))
 
     # If the output has more lines than the terminal, display it in a pager
     output = sio.getvalue()

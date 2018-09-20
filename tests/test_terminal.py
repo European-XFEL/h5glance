@@ -3,7 +3,8 @@ from h5glance import terminal
 
 def test_tree_view(simple_h5_file):
     sio = io.StringIO()
-    terminal.print_paths(simple_h5_file, file=sio)
+    tree = terminal.object_tree_node(simple_h5_file, simple_h5_file.filename)
+    terminal.print_tree(tree, file=sio)
     out = sio.getvalue()
     assert '└dataset2' in out
     assert 'uint64' in out
