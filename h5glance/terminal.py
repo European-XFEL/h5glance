@@ -73,7 +73,9 @@ def print_paths(group, prefix='', file=None):
         link = group.get(k, getlink=True)
         print(prefix, ('└' if islast else '├'), k, detail_for(obj, link),
               sep='', file=file)
-        if isinstance(obj, h5py.Group):
+
+        # Recurse into groups, but not soft links to groups
+        if isinstance(obj, h5py.Group) and isinstance(link, h5py.HardLink):
             print_paths(obj, prefix + ('  ' if islast else '│ '), file=file)
 
 def page(text):
