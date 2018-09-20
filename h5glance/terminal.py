@@ -45,7 +45,7 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
         select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
         print(ds[select], file=file)
 
-def detail_for(obj, link):
+def detail_for(obj, link, inc_n_attrs=False):
     """Detail for an HDF5 object, to display by its name in the tree view."""
     if isinstance(link, h5py.SoftLink):
         return '\t-> {}'.format(link.path)
@@ -59,23 +59,50 @@ def detail_for(obj, link):
         )
         if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
             detail += ' virtual'
-        return detail
     elif isinstance(obj, h5py.Group):
-        return ''
+        detail = ''
     else:
         return ' (unknown h5py type)'
 
-def print_paths(group, prefix='', file=None):
+    if inc_n_attrs:
+        n = len(obj.attrs)
+        if n:
+            detail += ' + {} attributes'
+
+    return detail
+
+def print_group_attrs(group, prefix='', file=None):
+    nattr = len(group.attrs)
+    if not nattr:
+        return
+
+    grp_empty = len(group) == 0
+    print(prefix, ('└' if grp_empty else '├'), nattr, ' attributes:',
+          sep='', file=file)
+
+    prefix += ('  ' if grp_empty else '│ ')
+    for i, (k, v) in enumerate(group.attrs.items()):
+        islast = (nattr == i + 1)
+        sv = str(v)
+        if len(sv) > 50:
+            sv = sv[:20] + '...' + sv[-20:]
+        print(prefix, ('└' if islast else '├'), k, ': ', sv,
+              sep='', file=file)
+
+def print_paths(group, prefix='', file=None, expand_attrs=False):
     """Visit and print name of all element in HDF5 file (from S Hauf)"""
     nkeys = len(group.keys())
     for i, (k, obj) in enumerate(group.items()):
         islast = (nkeys == i + 1)
         link = group.get(k, getlink=True)
-        print(prefix, ('└' if islast else '├'), k, detail_for(obj, link),
+        detail = detail_for(obj, link, inc_n_attrs=(not expand_attrs))
+        print(prefix, ('└' if islast else '├'), k, detail,
               sep='', file=file)
 
         # Recurse into groups, but not soft links to groups
         if isinstance(obj, h5py.Group) and isinstance(link, h5py.HardLink):
+            if expand_attrs:
+                print_group_attrs(obj, prefix + ('  ' if islast else '│ '), file=file)
             print_paths(obj, prefix + ('  ' if islast else '│ '), file=file)
 
 def page(text):
@@ -86,7 +113,7 @@ def page(text):
     pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
     run(pager_cmd, input=text.encode('utf-8'))
 
-def display_h5_obj(file: h5py.File, path=None):
+def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
     """Display information on an HDF5 file, group or dataset
 
     This is the central function for the h5glance command line tool.
@@ -100,6 +127,8 @@ def display_h5_obj(file: h5py.File, path=None):
         obj = file
 
     if isinstance(obj, h5py.Group):
+        if expand_attrs:
+            print_group_attrs(obj, file=sio)
         print_paths(obj, file=sio)
     elif isinstance(obj, h5py.Dataset):
         print_dataset_info(obj, file=sio)
@@ -172,6 +201,9 @@ def main(argv=None):
     ap.add_argument("path", nargs='?',
         help="Object to show within the file, or '-' to prompt for a name"
     )
+    ap.add_argument('--attrs', action='store_true',
+        help="Show attributes of groups",
+    )
     ap.add_argument('--version', action='version',
                     version='H5glance {}'.format(__version__))
 
@@ -189,4 +221,4 @@ def main(argv=None):
         path = prompt_for_path(args.file)
 
     with h5py.File(args.file, 'r') as f:
-        display_h5_obj(f, path)
+        display_h5_obj(f, path, expand_attrs=args.attrs)
