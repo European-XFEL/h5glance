@@ -21,6 +21,15 @@ layout_names = {
     h5py.h5d.VIRTUAL: 'Virtual',
 }
 
+def fmt_attr(v):
+    if isinstance(v, numpy.ndarray):
+        sv = 'array [{}: {}]'.format(v.dtype.name, fmt_shape(v.shape))
+    else:
+        sv = repr(v)
+        if len(sv) > 50:
+            sv = sv[:20] + '...' + sv[-20:]
+    return sv
+
 def print_dataset_info(ds: h5py.Dataset, file=None):
     """Print detailed information for an HDF5 dataset."""
     print('      dtype:', ds.dtype.name, file=file)
@@ -45,6 +54,13 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
         select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
         print(ds[select], file=file)
 
+    nattr = len(ds.attrs)
+    if nattr > 0:
+        print('\n{} attributes:'.format(nattr), file=file)
+        for k, v in ds.attrs.items():
+            print('* ', k, ': ', fmt_attr(v), sep='', file=file)
+
+
 def detail_for(obj, link, inc_n_attrs=False):
     """Detail for an HDF5 object, to display by its name in the tree view."""
     if isinstance(link, h5py.SoftLink):
@@ -67,7 +83,7 @@ def detail_for(obj, link, inc_n_attrs=False):
     if inc_n_attrs:
         n = len(obj.attrs)
         if n:
-            detail += ' + {} attributes'
+            detail += ' ({} attributes)'.format(n)
 
     return detail
 
@@ -83,10 +99,7 @@ def print_group_attrs(group, prefix='', file=None):
     prefix += ('  ' if grp_empty else '│ ')
     for i, (k, v) in enumerate(group.attrs.items()):
         islast = (nattr == i + 1)
-        sv = str(v)
-        if len(sv) > 50:
-            sv = sv[:20] + '...' + sv[-20:]
-        print(prefix, ('└' if islast else '├'), k, ': ', sv,
+        print(prefix, ('└' if islast else '├'), k, ': ', fmt_attr(v),
               sep='', file=file)
 
 def print_paths(group, prefix='', file=None, expand_attrs=False):
@@ -103,7 +116,8 @@ def print_paths(group, prefix='', file=None, expand_attrs=False):
         if isinstance(obj, h5py.Group) and isinstance(link, h5py.HardLink):
             if expand_attrs:
                 print_group_attrs(obj, prefix + ('  ' if islast else '│ '), file=file)
-            print_paths(obj, prefix + ('  ' if islast else '│ '), file=file)
+            print_paths(obj, prefix + ('  ' if islast else '│ '), file=file,
+                        expand_attrs=expand_attrs)
 
 def page(text):
     """Display text in a terminal pager
@@ -129,7 +143,7 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
     if isinstance(obj, h5py.Group):
         if expand_attrs:
             print_group_attrs(obj, file=sio)
-        print_paths(obj, file=sio)
+        print_paths(obj, file=sio, expand_attrs=expand_attrs)
     elif isinstance(obj, h5py.Dataset):
         print_dataset_info(obj, file=sio)
     else:
