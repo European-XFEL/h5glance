@@ -58,43 +58,81 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
     for k, v in ds.attrs.items():
         print('* ', k, ': ', fmt_attr(v), sep='', file=file)
 
-def object_tree_node(obj, name, expand_attrs=False):
-    """Build a tree node for an HDF5 group/dataset
+class ColorsNone:
+    dataset = group = link = reset = ''
+
+class ColorsDefault:
+    dataset = '\x1b[1m'  # Bold
+    group = '\x1b[94m'   # Bright blue
+    link = '\x1b[95m'    # Bright magenta
+    reset = '\x1b[0m'
+
+def use_colors():
+    if os.name != 'posix':
+        return False
+    env = os.environ.get('H5GLANCE_COLORS', '')
+    if env:
+        return env != '0'
+    return sys.stdout.isatty()
+
+class TreeViewBuilder:
+    """Build a tree view of an HDF5 group or file
+
+    The tree nodes are tuples (line, children).
     """
-    children = []
-    detail = attr_detail = ''
+    def __init__(self, expand_attrs):
+        self.expand_attrs = expand_attrs
+        if use_colors():
+            self.colors = ColorsDefault
+        else:
+            self.colors = ColorsNone
 
-    if expand_attrs:
-        children += attrs_tree_nodes(obj)
-    else:
-        n = len(obj.attrs)
-        if n:
-            attr_detail = ' ({} attributes)'.format(n)
+    def object_node(self, obj, name):
+        """Build a tree node for an HDF5 group/dataset
+        """
+        children = []
+        detail = attr_detail = ''
+        color_start = color_stop = ''
 
-    if isinstance(obj, h5py.Dataset):
-        detail = '\t[{dt}: {shape}]'.format(
-            dt=obj.dtype.name,
-            shape=fmt_shape(obj.shape),
-        )
-        if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
-            detail += ' virtual'
-    elif isinstance(obj, h5py.Group):
-        children += [group_item_tree_node(obj, key, expand_attrs=expand_attrs)
-                     for key in obj]
-    else:
-        detail = ' (unknown h5py type)'
+        if self.expand_attrs:
+            children += attrs_tree_nodes(obj)
+        else:
+            n = len(obj.attrs)
+            if n:
+                attr_detail = ' ({} attributes)'.format(n)
 
-    return name + detail + attr_detail, children
+        if isinstance(obj, h5py.Dataset):
+            color_start = self.colors.dataset
+            color_stop = self.colors.reset
+            detail = '\t[{dt}: {shape}]'.format(
+                dt=obj.dtype.name,
+                shape=fmt_shape(obj.shape),
+            )
+            if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
+                detail += ' virtual'
+        elif isinstance(obj, h5py.Group):
+            color_start = self.colors.group
+            color_stop = self.colors.reset
+            children += [self.group_item_node(obj, key)
+                         for key in obj]
+        else:
+            detail = ' (unknown h5py type)'
 
-def group_item_tree_node(group, key, expand_attrs=False):
-    """Build a tree node for one key in a group"""
-    link = group.get(key, getlink=True)
-    if isinstance(link, h5py.SoftLink):
-        return '{}\t-> {}'.format(key, link.path), []
-    elif isinstance(link, h5py.ExternalLink):
-        return '{}\t-> {}/{}'.format(key, link.filename, link.path), []
-    else:
-        return object_tree_node(group[key], key, expand_attrs=expand_attrs)
+        return (color_start + name + color_stop + detail + attr_detail), children
+
+    def group_item_node(self, group, key):
+        """Build a tree node for one key in a group"""
+        link = group.get(key, getlink=True)
+        if isinstance(link, h5py.SoftLink):
+            target = link.path
+        elif isinstance(link, h5py.ExternalLink):
+            target = '{}/{}'.format(link.filename, link.path)
+        else:
+            return self.object_node(group[key], key)
+
+        line = '{}{}{}\t-> {}'.format(
+            self.colors.link, key, self.colors.reset, target)
+        return line, []
 
 def attrs_tree_nodes(obj):
     """Build tree nodes for attributes"""
@@ -144,8 +182,8 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
         obj = file
 
     if isinstance(obj, h5py.Group):
-        print_tree(object_tree_node(obj, root, expand_attrs=expand_attrs),
-                   file=sio)
+        tvb = TreeViewBuilder(expand_attrs=expand_attrs)
+        print_tree(tvb.object_node(obj, root), file=sio)
     elif isinstance(obj, h5py.Dataset):
         print(root, file=sio)
         print_dataset_info(obj, file=sio)
