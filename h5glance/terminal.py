@@ -80,7 +80,7 @@ class TreeViewBuilder:
 
     The tree nodes are tuples (line, children).
     """
-    def __init__(self, expand_attrs):
+    def __init__(self, expand_attrs=False):
         self.expand_attrs = expand_attrs
         if use_colors():
             self.colors = ColorsDefault

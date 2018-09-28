@@ -3,7 +3,8 @@ from h5glance import terminal
 
 def test_tree_view(simple_h5_file):
     sio = io.StringIO()
-    tree = terminal.object_tree_node(simple_h5_file, simple_h5_file.filename)
+    tvb = terminal.TreeViewBuilder()
+    tree = tvb.object_node(simple_h5_file, simple_h5_file.filename)
     terminal.print_tree(tree, file=sio)
     out = sio.getvalue()
     assert '└dataset2' in out
@@ -11,12 +12,13 @@ def test_tree_view(simple_h5_file):
     assert '128 × 500' in out
 
 def test_attributes(simple_h5_file):
-    r1, c1 = terminal.object_tree_node(simple_h5_file['group1'], 'group1')
+    tvb = terminal.TreeViewBuilder()
+    r1, c1 = tvb.object_node(simple_h5_file['group1'], 'group1')
     assert '2 attributes' in r1
     assert 'attributes' not in c1[0][0]
 
-    r2, c2 = terminal.object_tree_node(simple_h5_file['group1'], 'group1',
-                                       expand_attrs=True)
+    tvb2 = terminal.TreeViewBuilder(expand_attrs=True)
+    r2, c2 = tvb2.object_node(simple_h5_file['group1'], 'group1')
     assert 'attributes' not in r2
     assert '2 attributes' in c2[0][0]
     attr_lines = {node[0] for node in c2[0][1]}
