@@ -11,6 +11,15 @@ from shutil import get_terminal_size
 from subprocess import run
 import sys
 
+def fmt_dtype(dtype):
+    if isinstance(dtype, str):
+        return 'str'
+    if dtype.fields:
+        return '(' + ', '.join('{}: {}'.format(
+            name, fmt_dtype(dtype)) for name, (dtype, offset) in dtype.fields.items()) + ')'
+    else:
+        return dtype.name
+
 def fmt_shape(shape):
     return " × ".join(('Unlimited' if n is None else str(n)) for n in shape)
 
@@ -23,7 +32,7 @@ layout_names = {
 
 def fmt_attr(v):
     if isinstance(v, numpy.ndarray):
-        sv = 'array [{}: {}]'.format(v.dtype.name, fmt_shape(v.shape))
+        sv = 'array [{}: {}]'.format(fmt_dtype(v.dtype), fmt_shape(v.shape))
     else:
         sv = repr(v)
         if len(sv) > 50:
@@ -32,7 +41,7 @@ def fmt_attr(v):
 
 def print_dataset_info(ds: h5py.Dataset, file=None):
     """Print detailed information for an HDF5 dataset."""
-    print('      dtype:', ds.dtype.name, file=file)
+    print('      dtype:', fmt_dtype(ds.dtype), file=file)
     print('      shape:', fmt_shape(ds.shape), file=file)
     print('   maxshape:', fmt_shape(ds.maxshape), file=file)
     layout = ds.id.get_create_plist().get_layout()
@@ -105,7 +114,7 @@ class TreeViewBuilder:
             color_start = self.colors.dataset
             color_stop = self.colors.reset
             detail = '\t[{dt}: {shape}]'.format(
-                dt=obj.dtype.name,
+                dt=fmt_dtype(obj.dtype),
                 shape=fmt_shape(obj.shape),
             )
             if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
