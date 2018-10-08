@@ -12,9 +12,15 @@ from subprocess import run
 import sys
 
 def fmt_dtype(dtype):
-    if isinstance(dtype, str):
-        return 'str'
-    if dtype.fields:
+    if dtype.metadata and 'vlen' in dtype.metadata:
+        base_dtype = dtype.metadata['vlen']
+        if base_dtype == str:
+            return 'str'
+        elif base_dtype == 'bytes':
+            return 'bstr'
+        else:
+            return 'vlen {}'.format(fmt_dtype(base_dtype))
+    elif dtype.fields:
         return '(' + ', '.join('{}: {}'.format(
             name, fmt_dtype(dtype)) for name, (dtype, offset) in dtype.fields.items()) + ')'
     else:
