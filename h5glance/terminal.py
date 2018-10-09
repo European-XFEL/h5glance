@@ -17,7 +17,7 @@ def fmt_dtype(dtype):
         if base_dtype == str:
             return 'str'
         elif base_dtype == 'bytes':
-            return 'bstr'
+            return 'ascii str'
         else:
             return 'vlen {}'.format(fmt_dtype(base_dtype))
     elif dtype.fields:

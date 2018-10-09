@@ -24,13 +24,26 @@ def test_attributes(simple_h5_file):
     attr_lines = {node[0] for node in c2[0][1]}
     assert len(attr_lines) == 2
 
-
 def test_dataset_info(simple_h5_file):
     sio = io.StringIO()
     terminal.print_dataset_info(simple_h5_file["/group1/subgroup1/dataset2"], file=sio)
     out = sio.getvalue()
     assert 'dtype: float32' in out
     assert 'shape: 2 × 128 × 500' in out
+
+def test_compound_types(simple_h5_file):
+    sio = io.StringIO()
+    terminal.print_dataset_info(simple_h5_file["compound"], file=sio)
+    out = sio.getvalue()
+    assert 'dtype: (count: uint64, amount: float32)' in out
+    assert '[(1, 0.5 ) (3, 0.09)]' in out
+
+def test_vlen_types(simple_h5_file):
+    sio = io.StringIO()
+    terminal.print_dataset_info(simple_h5_file["prose"], file=sio)
+    out = sio.getvalue()
+    assert 'dtype: str' in out
+    assert "['Lorem ipsum dolor sit amet' 'consectetur adipiscing elit']" in out
 
 def test_completer(simple_h5_file):
     comp = terminal.H5Completer(simple_h5_file)
