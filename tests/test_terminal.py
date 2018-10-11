@@ -1,4 +1,6 @@
 import io
+import re
+
 from h5glance import terminal
 
 def test_tree_view(simple_h5_file):
@@ -36,7 +38,7 @@ def test_compound_types(simple_h5_file):
     terminal.print_dataset_info(simple_h5_file["compound"], file=sio)
     out = sio.getvalue()
     assert 'dtype: (count: uint64, amount: float32)' in out
-    assert '[(1, 0.5 ) (3, 0.09)]' in out
+    assert re.search(r'\(\s*3\s*,\s*0.09\s*\)', out)
 
 def test_vlen_types(simple_h5_file):
     sio = io.StringIO()
