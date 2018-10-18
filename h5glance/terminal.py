@@ -14,9 +14,9 @@ import sys
 def fmt_dtype(dtype):
     if dtype.metadata and 'vlen' in dtype.metadata:
         base_dtype = dtype.metadata['vlen']
-        if base_dtype == str:
+        if base_dtype is str:
             return 'UTF-8 str'
-        elif base_dtype == 'bytes':
+        elif base_dtype is bytes:
             return 'ASCII str'
         else:
             return 'vlen {}'.format(fmt_dtype(base_dtype))
