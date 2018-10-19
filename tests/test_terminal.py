@@ -1,7 +1,13 @@
 import io
+import os
 import re
+import pytest
 
 from h5glance import terminal
+
+@pytest.fixture(scope='module', autouse=True)
+def no_color():
+    os.environ['H5GLANCE_COLORS'] = '0'
 
 def test_tree_view(simple_h5_file):
     sio = io.StringIO()
