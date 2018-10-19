@@ -2,6 +2,7 @@
 """
 import argparse
 import h5py
+import h5py.h5o
 import io
 import os
 import numpy
@@ -106,42 +107,45 @@ class TreeViewBuilder:
     def object_node(self, obj, name):
         """Build a tree node for an HDF5 group/dataset
         """
-        children = []
-        detail = attr_detail = ''
-        color_start = color_stop = ''
-
-        obj_id = h5py.h5o.get_info(obj.id).addr
-        first_link = self.visited.setdefault(obj_id, obj.name)
-        is_first_link = first_link == obj.name
-
-        if is_first_link:
-            if self.expand_attrs:
-                children += attrs_tree_nodes(obj)
-            else:
-                n = len(obj.attrs)
-                attr_detail = ' ({} attributes)'.format(n) if n else ''
-
+        color_stop = self.colors.reset
         if isinstance(obj, h5py.Dataset):
             color_start = self.colors.dataset
-            color_stop = self.colors.reset
-            if is_first_link:
-                detail = '\t[{dt}: {shape}]'.format(
-                    dt=fmt_dtype(obj.dtype),
-                    shape=fmt_shape(obj.shape),
-                )
-                if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
-                    detail += ' virtual'
         elif isinstance(obj, h5py.Group):
             color_start = self.colors.group
-            color_stop = self.colors.reset
-            if is_first_link:
-                children += [self.group_item_node(obj, key)
-                             for key in obj]
+        else:
+            color_start = ''
+
+        obj_id = h5py.h5o.get_info(obj.id).addr
+
+        if obj_id in self.visited:
+            # Hardlink to an object we've seen before
+            first_link = self.visited[obj_id]
+            return (color_start + name + color_stop + '\t= ' + first_link), []
+
+        # An object we haven't seen before
+        self.visited[obj_id] = obj.name
+
+        children = []
+        detail = attr_detail = ''
+
+        if self.expand_attrs:
+            children += attrs_tree_nodes(obj)
+        else:
+            n = len(obj.attrs)
+            attr_detail = ' ({} attributes)'.format(n) if n else ''
+
+        if isinstance(obj, h5py.Dataset):
+            detail = '\t[{dt}: {shape}]'.format(
+                dt=fmt_dtype(obj.dtype),
+                shape=fmt_shape(obj.shape),
+            )
+            if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
+                detail += ' virtual'
+        elif isinstance(obj, h5py.Group):
+            children += [self.group_item_node(obj, key)
+                         for key in obj]
         else:
             detail = ' (unknown h5py type)'
-
-        if not is_first_link:
-            detail += '\t= {}'.format(first_link)
 
         return (color_start + name + color_stop + detail + attr_detail), children
 
