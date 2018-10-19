@@ -21,8 +21,9 @@ def fmt_dtype(dtype):
         else:
             return 'vlen {}'.format(fmt_dtype(base_dtype))
     elif dtype.fields:
-        return '(' + ', '.join('{}: {}'.format(
-            name, fmt_dtype(dtype)) for name, (dtype, offset) in dtype.fields.items()) + ')'
+        fields = ['{}: {}'.format(name, fmt_dtype(dtype.fields[name][0]))
+                  for name in dtype.names]
+        return '({})'.format(', '.join(fields))
     else:
         return dtype.name
 
