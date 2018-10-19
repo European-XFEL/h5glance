@@ -45,6 +45,15 @@ def test_vlen_types(simple_h5_file):
     assert 'dtype: str' in out
     assert "['Lorem ipsum dolor sit amet' 'consectetur adipiscing elit']" in out
 
+def test_hard_links(simple_h5_file):
+    sio = io.StringIO()
+    tvb = terminal.TreeViewBuilder()
+    tree = tvb.object_node(simple_h5_file, simple_h5_file.filename)
+    terminal.print_tree(tree, file=sio)
+    out = sio.getvalue()
+    assert 'folder\t= /group1/subgroup1' in out
+    assert 'values\t= /group1/subgroup1/dataset1' in out
+
 def test_completer(simple_h5_file):
     comp = terminal.H5Completer(simple_h5_file)
     # Complete groups
