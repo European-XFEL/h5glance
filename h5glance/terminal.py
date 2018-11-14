@@ -62,14 +62,15 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
     if sys.stdout.isatty():
         numpy.set_printoptions(linewidth=get_terminal_size()[0])
 
-    print('\nsample data:', file=file)
-    if ds.ndim == 0:
-        print(ds[()], file=file)
-    elif ds.ndim == 1:
-        print(ds[:10], file=file)
-    else:
-        select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
-        print(ds[select], file=file)
+    if ds.size > 0:
+        print('\nsample data:', file=file)
+        if ds.ndim == 0:
+            print(ds[()], file=file)
+        elif ds.ndim == 1:
+            print(ds[:10], file=file)
+        else:
+            select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
+            print(ds[select], file=file)
 
     print('\n{} attributes:'.format(len(ds.attrs)), file=file)
     for k, v in ds.attrs.items():
