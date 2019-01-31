@@ -33,6 +33,6 @@ completion::
     Object path: sample.h5/  # try tapping tab
 
 The HTML interface lets you inspect HDF5 files in a Jupyter Notebook.
-`Demo.ipynb <https://nbviewer.jupyter.org/github/takluyver/h5glance/blob/master/Demo.ipynb>`_
+`Demo.ipynb <https://nbviewer.jupyter.org/github/European-XFEL/h5glance/blob/master/Demo.ipynb>`_
 shows how to use it.
 
