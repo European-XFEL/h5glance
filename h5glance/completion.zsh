@@ -23,6 +23,3 @@ function _h5glance {
     ecas
 }
 
-function _h5glance_infile {
-
-}
