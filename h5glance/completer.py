@@ -60,7 +60,7 @@ def install_hooks():
 
     # Zsh
     if shutil.which('zsh'):
-        src = pjoin(pkgdir, 'completion.bash')
+        src = pjoin(pkgdir, 'completion.zsh')
         dst_dir = pjoin(data_home, 'zsh-completions')
         os.makedirs(dst_dir, exist_ok=True)
         dst = pjoin(dst_dir, '_h5glance')
