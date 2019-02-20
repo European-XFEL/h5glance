@@ -12,6 +12,8 @@ from shutil import get_terminal_size
 from subprocess import run
 import sys
 
+from .completer import H5Completer
+
 def fmt_dtype(dtype):
     if dtype.metadata and 'vlen' in dtype.metadata:
         base_dtype = dtype.metadata['vlen']
@@ -231,37 +233,7 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
 
     print(output)
 
-class H5Completer:
-    """Readline tab completion for paths inside an HDF5 file"""
-    def __init__(self, file: h5py.File):
-        self.file = file
-        self.cache = (None, [])
 
-    def completions(self, text: str):
-        if text == self.cache[0]:
-            return self.cache[1]
-        prev_path, _, prefix = text.rpartition('/')
-        group = self.file
-        if prev_path:
-            group = self.file[prev_path]
-            prev_path += '/'
-        res = [prev_path + k + ('/' if isinstance(v, h5py.Group) else '')
-               for (k, v) in group.items()
-               if k.lower().startswith(prefix.lower())]
-        self.cache = (text, res)
-        return res
-
-    def rlcomplete(self, text: str, state: int):
-        # print(repr(text), state)
-        try:
-            res = self.completions(text)
-        except Exception as e:
-            #print(e)
-            return None
-        # print(repr(text), len(res))
-        if state >= len(res):
-            return None
-        return res[state]
 
 def prompt_for_path(filename):
     """Prompt the user for a path inside the HDF5 file"""
