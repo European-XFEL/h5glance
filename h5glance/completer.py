@@ -70,7 +70,7 @@ def install_hooks():
         stdout = subprocess.check_output(['zsh', '-i', '-c', 'echo $FPATH'])
         if dst_dir not in stdout.decode('utf-8').split(':'):
             with open(os.path.expanduser('~/.zshrc'), 'a') as f:
-                f.write('\nfpath=("{}" $fpath)\n'.format(dst_dir))
+                f.write('\nfpath=("{}" $fpath)\ncompinit\n'.format(dst_dir))
             print("Added {} to fpath in ~/.zshrc".format(dst_dir))
 
 
