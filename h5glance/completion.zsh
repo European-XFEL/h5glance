@@ -17,9 +17,10 @@ function _h5glance {
     case "$state" in
         infile)
             declare -a matching_paths
+            # Case insensitive matching:
+            zstyle ":completion::complete:h5glance:argument-2:*" matcher 'm:{a-z}={A-Z}'
             matching_paths=($(_h5glance_complete_infile "${line[1]}" "${line[2]}"))
             _describe "paths in file" matching_paths
             ;;
     esac
 }
-
