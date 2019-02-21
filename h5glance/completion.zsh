@@ -20,6 +20,6 @@ function _h5glance {
             matching_paths=($(_h5glance_complete_infile "${line[1]}" "${line[2]}"))
             _describe "paths in file" matching_paths
             ;;
-    ecas
+    esac
 }
 
