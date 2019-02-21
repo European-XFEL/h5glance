@@ -15,23 +15,35 @@ function _h5glance {
 
     case "$state" in
         infile)
-            declare -a matching_paths
-            matching_paths=($(_h5glance_complete_infile "${line[1]}" "${line[2]}"))
+                declare -a matches
+                local grouppath=""
+                if [[ ${line[2]} =~ / ]]; then
+                  # Hack: 'dirname a/b/' returns 'a'. The trailing x makes it 'a/b'.
+                  grouppath=$(dirname "${line[2]}x")/
+                fi
 
-            # Code below by Xavier Delaruelle, on StackOverflow.
-            # https://stackoverflow.com/a/53907053/434217
-            # Used under SO's default CC-BY-SA-3.0 license.
-            local suffix=' ';
-            # do not append space to word completed if it is a directory (ends with /)
-            for val in $matching_paths; do
-                    if [ "${val: -1:1}" = '/' ]; then
-                        suffix=''
-                        break
-                    fi
-            done
+                # List entries in the group, add the group path and a / suffix for
+                # subgroups, and case-insensitively filter them against the text entered.
+                matches=($(h5ls --simple "${line[1]}/${grouppath}" \
+                          | awk -v g="${grouppath}" \
+                              '{s=""; if ($2 == "Group") s="/"; print g $1 s}' \
+                          | awk -v IGNORECASE=1 -v p="${line[2]}" \
+                              'p==substr($0,0,length(p))' ))
 
-            # The -M match-spec argument allows case-insensitive matches
-            compadd -S "$suffix" -M 'm:{a-zA-Z}={A-Za-z}' -a matching_paths
-            ;;
+                # Code below by Xavier Delaruelle, on StackOverflow.
+                # https://stackoverflow.com/a/53907053/434217
+                # Used under SO's default CC-BY-SA-3.0 license.
+                local suffix=' ';
+                # do not append space to word completed if it is a directory (ends with /)
+                for val in $matches; do
+                        if [ "${val: -1:1}" = '/' ]; then
+                            suffix=''
+                            break
+                        fi
+                done
+
+                # The -M match-spec argument allows case-insensitive matches
+                compadd -S "$suffix" -M 'm:{a-zA-Z}={A-Za-z}' -a matches
+                ;;
     esac
 }

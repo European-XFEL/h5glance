@@ -16,7 +16,20 @@ _h5glance()
 
     # Complete paths inside file
     if [[ -f ${prev} ]]; then
-      COMPREPLY=( $(_h5glance_complete_infile "${prev}" "${cur}") )
+      local grouppath=""
+      if [[ ${cur} =~ / ]]; then
+        # Hack: 'dirname a/b/' returns 'a'. The trailing x makes it 'a/b'.
+        grouppath=$(dirname "${cur}x")/
+      fi
+
+      # List entries in the group, add the group path and a / suffix for
+      # subgroups, and case-insensitively filter them against the text entered.
+      COMPREPLY=($(h5ls --simple "${prev}/${grouppath}" \
+                  | awk -v g="${grouppath}" \
+                      '{sfx=" "; if ($2 == "Group") sfx="/"; print g $1 sfx}' \
+                  | awk -v IGNORECASE=1 -v p="${cur}" \
+                      'p==substr($0,0,length(p))' \
+                 ) )
       return 0
     fi
 }

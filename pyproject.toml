@@ -18,4 +18,3 @@ classifiers = ["License :: OSI Approved :: BSD License"]
 [tool.flit.scripts]
 h5glance = "h5glance.terminal:main"
 h5glance-html = "h5glance.html_cli:main"
-_h5glance_complete_infile = "h5glance.completer:main"
