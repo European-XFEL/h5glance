@@ -34,12 +34,6 @@ class H5Completer:
             return None
         return res[state]
 
-def main():
-    """Called by shells to generate completions"""
-    filename, prefix = sys.argv[1:]
-    f = h5py.File(filename, 'r')
-    for completion in H5Completer(f).completions(prefix):
-        print(completion)
 
 def install_hooks():
     """Install hooks for bash to complete paths in files"""
