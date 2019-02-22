@@ -32,6 +32,11 @@ completion::
     $ h5glance sample.h5 -
     Object path: sample.h5/  # try tapping tab
 
+Or run ``python -m h5glance.completer`` to install tab completion hooks for bash
+and zsh.
+
+### HTML interface
+
 The HTML interface lets you inspect HDF5 files in a Jupyter Notebook.
 `Demo.ipynb <https://nbviewer.jupyter.org/github/European-XFEL/h5glance/blob/master/Demo.ipynb>`_
 shows how to use it.
