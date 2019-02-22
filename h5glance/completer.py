@@ -1,4 +1,4 @@
-"""Shell integreation to tab complete paths inside an HDF5 file"""
+"""Shell integration to tab complete paths inside an HDF5 file"""
 import os
 import shutil
 import subprocess
