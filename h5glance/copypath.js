@@ -64,7 +64,7 @@
     }
 
     function enable_copylinks(parent) {
-        let links = parent.querySelectorAll(".h5glance-dataset-copylink")
+        let links = parent.querySelectorAll(".h5glance-dataset-copylink");
         links.forEach(function (link) {
             link.addEventListener("click", copy_event_handler);
         });
