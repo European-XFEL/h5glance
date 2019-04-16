@@ -4,6 +4,8 @@ from htmlgen import (Document, Element, Division, UnorderedList, Checkbox,
                      )
 from pathlib import Path
 
+from . import utils
+
 _PKGDIR = Path(__file__).parent
 
 class Style(Element):
@@ -85,7 +87,7 @@ def item_for_dataset(name, ds):
 def item_for_group(gname, grp):
     subgroups, datasets = [], []
     for name, obj in sorted(grp.items()):
-        if isinstance(obj, h5py.Group):
+        if utils.is_group(obj):
             subgroups.append((name, obj))
         else:
             datasets.append((name, obj))
@@ -96,16 +98,16 @@ def item_for_group(gname, grp):
     ))
 
 def file_or_grp_name(obj):
-    if isinstance(obj, h5py.File):
+    if utils.is_file(obj):
         return obj.filename
-    elif isinstance(obj, h5py.Group):
+    elif utils.is_group(obj):
         return obj.name
     return obj
 
 treeview_ids = id_generator("h5glance-container-%d")
 
 def make_fragment(obj):
-    if isinstance(obj, h5py.Group):
+    if utils.is_group(obj):
         name = file_or_grp_name(obj)
         ct = make_list(item_for_group(name, obj))
     elif isinstance(obj, (str, Path)) and h5py.is_hdf5(obj):
