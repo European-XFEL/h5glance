@@ -71,9 +71,13 @@ def checkbox_w_label(label_content):
     return [c, l]
 
 def item_for_dataset(name, ds):
-    shape = " × ".join(str(n) for n in ds.shape)
     namespan = Span(name)
     namespan.add_css_classes("h5glance-dataset-name")
+    if ds is None:
+        # h5pyd can return None dataset for external links
+        li = ListItem(namespan)
+        return li
+    shape = " × ".join(str(n) for n in ds.shape)
     copylink = Link("#", "[📋]")
     copylink.set_attribute("data-hdf5-path", ds.name)
     copylink.add_css_classes("h5glance-dataset-copylink")
