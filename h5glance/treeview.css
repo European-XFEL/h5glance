@@ -75,7 +75,7 @@
 
 .h5glance-css-treeview input:checked + label::before
 {
-    content: "–";
+    content: "\2212";  /* Minus character using same width as + */
 }
 
 /* webkit adjacent element selector bugfix */
