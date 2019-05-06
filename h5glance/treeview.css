@@ -68,14 +68,14 @@
 
 .h5glance-css-treeview label::before
 {
-	content: "+";
+	content: "\229e"; /* squared plus */
 	width: 1.5em;
 	vertical-align: middle;
 }
 
 .h5glance-css-treeview input:checked + label::before
 {
-    content: "–";
+    content: "\229f";  /* squared minus */
 }
 
 /* webkit adjacent element selector bugfix */
