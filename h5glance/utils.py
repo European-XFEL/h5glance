@@ -24,25 +24,31 @@ def check_class(obj_class):
         _mapping[obj_class] = None
 
 
-def is_file(obj):
-    """Returns true if the object is a h5py-like file."""
-    obj_class = obj.__class__
+def get_h5py_kind(obj):
+    """Returns the h5py-like kind of an object.
+
+    The result can be `file`, `group`, `dataset` or `None` if the object is not
+    an h5py-like object.
+    """
+    obj_class = type(obj)
     if obj_class not in _mapping:
         check_class(obj_class)
-    return _mapping.get(obj_class, None) == "file"
+    return _mapping.get(obj_class, None)
+
+
+def is_file(obj):
+    """Returns true if the object is a h5py-like file."""
+    kind = get_h5py_kind(obj)
+    return kind == "file"
 
 
 def is_dataset(obj):
     """Returns true if the object is a h5py-like dataset."""
-    obj_class = obj.__class__
-    if obj_class not in _mapping:
-        check_class(obj_class)
-    return _mapping.get(obj_class, None) == "dataset"
+    kind = get_h5py_kind(obj)
+    return kind == "dataset"
 
 
 def is_group(obj):
     """Returns true if the object is a h5py-like group."""
-    obj_class = obj.__class__
-    if obj_class not in _mapping:
-        check_class(obj_class)
-    return _mapping.get(obj_class, None) in ["file", "group"]
+    kind = get_h5py_kind(obj)
+    return kind in ["file", "group"]
