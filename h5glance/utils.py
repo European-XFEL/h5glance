@@ -2,10 +2,11 @@
 """
 import h5py
 
-_mapping = {}
-_mapping[h5py.File] = "file"
-_mapping[h5py.Group] = "group"
-_mapping[h5py.Dataset] = "dataset"
+_mapping = {
+    h5py.File: "file",
+    h5py.Group: "group",
+    h5py.Dataset: "dataset",
+}
 
 
 def register_h5pyd():
