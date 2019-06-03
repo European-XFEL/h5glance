@@ -38,7 +38,12 @@ layout_names = {
     h5py.h5d.VIRTUAL: 'Virtual',
 }
 
-def fmt_attr(v):
+def fmt_attr(key, attrs):
+    try:
+        v = attrs[key]
+    except Exception:
+        return "<Unable to read attribute>"
+
     if isinstance(v, numpy.ndarray):
         sv = 'array [{}: {}]'.format(fmt_dtype(v.dtype), fmt_shape(v.shape))
     else:
@@ -73,8 +78,8 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
             print(ds[select], file=file)
 
     print('\n{} attributes:'.format(len(ds.attrs)), file=file)
-    for k, v in ds.attrs.items():
-        print('* ', k, ': ', fmt_attr(v), sep='', file=file)
+    for k in ds.attrs:
+        print('* ', k, ': ', fmt_attr(k, ds.attrs), sep='', file=file)
 
 class ColorsNone:
     dataset = group = link = reset = ''
@@ -171,8 +176,8 @@ def attrs_tree_nodes(obj):
     if not nattr:
         return []
 
-    children = [('{}: {}'.format(k, fmt_attr(v)), [])
-                for (k, v) in obj.attrs.items()]
+    children = [('{}: {}'.format(k, fmt_attr(k, obj.attrs)), [])
+                for k in obj.attrs]
     return [('{} attributes:'.format(nattr), children)]
 
 def print_tree(node, prefix1='', prefix2='', file=None):
