@@ -12,6 +12,8 @@ def simple_h5_file():
         f.create_dataset('group1/subgroup1/dataset1', (200,), dtype='u8')
         f.create_dataset('group1/subgroup1/dataset2', (2, 128, 500), dtype='f4')
         f.create_dataset('group1/subgroup2/dataset1', (12,), dtype='i2')
+        f.create_dataset('group1/scalar', shape=(), dtype='i4')
+        f.create_dataset('group1/empty', shape=None, dtype='i4')
         f.create_dataset('compound',
             data=numpy.array([(1, 0.5), (3, 0.090)],
                              dtype=numpy.dtype([('count', 'u8'), ('amount', 'f4')])))

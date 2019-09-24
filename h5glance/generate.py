@@ -77,7 +77,7 @@ def item_for_dataset(name, ds):
         # h5pyd can return None dataset for external links
         li = ListItem(namespan)
         return li
-    shape = " × ".join(str(n) for n in ds.shape)
+    shape = utils.fmt_shape(ds.shape)
     copylink = Link("#", "[📋]")
     copylink.set_attribute("data-hdf5-path", ds.name)
     copylink.add_css_classes("h5glance-dataset-copylink")

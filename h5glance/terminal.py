@@ -12,6 +12,8 @@ from shutil import get_terminal_size
 from subprocess import run
 import sys
 
+from .utils import fmt_shape
+
 def fmt_dtype(dtype):
     if dtype.metadata and 'vlen' in dtype.metadata:
         base_dtype = dtype.metadata['vlen']
@@ -27,9 +29,6 @@ def fmt_dtype(dtype):
         return '({})'.format(', '.join(fields))
     else:
         return dtype.name
-
-def fmt_shape(shape):
-    return " × ".join(('Unlimited' if n is None else str(n)) for n in shape)
 
 layout_names = {
     h5py.h5d.COMPACT: 'Compact',
@@ -56,7 +55,8 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
     """Print detailed information for an HDF5 dataset."""
     print('      dtype:', fmt_dtype(ds.dtype), file=file)
     print('      shape:', fmt_shape(ds.shape), file=file)
-    print('   maxshape:', fmt_shape(ds.maxshape), file=file)
+    if ds.shape:  # Skip maxshape for scalar & empty datasets
+        print('   maxshape:', fmt_shape(ds.maxshape), file=file)
     layout = ds.id.get_create_plist().get_layout()
     print('     layout:', layout_names.get(layout, 'Unknown'), file=file)
     if layout == h5py.h5d.CHUNKED:
@@ -67,7 +67,7 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
     if sys.stdout.isatty():
         numpy.set_printoptions(linewidth=get_terminal_size()[0])
 
-    if ds.size > 0:
+    if ds.size and ds.size > 0:  # size is None for empty datasets
         print('\nsample data:', file=file)
         if ds.ndim == 0:
             print(ds[()], file=file)

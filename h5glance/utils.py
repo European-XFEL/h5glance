@@ -53,3 +53,11 @@ def is_group(obj):
     """Returns true if the object is a h5py-like group."""
     kind = get_h5py_kind(obj)
     return kind in ["file", "group"]
+
+
+def fmt_shape(shape):
+    if shape is None:
+        return "empty"
+    if shape == ():
+        return "scalar"
+    return " × ".join(('Unlimited' if n is None else str(n)) for n in shape)
