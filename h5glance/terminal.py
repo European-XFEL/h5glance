@@ -44,7 +44,10 @@ def fmt_attr(key, attrs):
         return "<Unable to read attribute>"
 
     if isinstance(v, numpy.ndarray):
-        sv = 'array [{}: {}]'.format(fmt_dtype(v.dtype), fmt_shape(v.shape))
+        if v.ndim < 2:
+            sv = numpy.array2string(v, precision=5, threshold=10)
+        else:
+            sv = 'array [{}: {}]'.format(fmt_dtype(v.dtype), fmt_shape(v.shape))
     else:
         sv = repr(v)
         if len(sv) > 50:
