@@ -329,4 +329,4 @@ def main(argv=None):
         path = prompt_for_path(args.file)
 
     with h5py.File(args.file, 'r') as f:
-        display_h5_obj(f, path, expand_attrs=args.attrs)
+        display_h5_obj(f, path, slice_expr=args.slice, expand_attrs=args.attrs)
