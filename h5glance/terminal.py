@@ -309,8 +309,8 @@ def main(argv=None):
         help="Show attributes of groups",
     )
     ap.add_argument('-s', '--slice',
-        help="Select part of a dataset to examine with a Python slice "
-             "expression, e.g. 0,100:110",
+        help="Select part of a dataset to examine, using Python slicing and "
+             "indexing as for a numpy array, e.g. 0,100:110",
     )
     ap.add_argument('--version', action='version',
                     version='H5glance {}'.format(__version__))
