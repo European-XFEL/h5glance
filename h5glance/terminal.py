@@ -67,6 +67,7 @@ def print_dataset_info(ds: h5py.Dataset, slice_expr=None, file=None):
         print('compression: {} (options: {})'
               .format(ds.compression, ds.compression_opts), file=file)
 
+    numpy.set_printoptions(threshold=numpy.inf)
     if sys.stdout.isatty():
         numpy.set_printoptions(linewidth=get_terminal_size()[0])
 
