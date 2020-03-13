@@ -46,6 +46,12 @@ def test_compound_types(simple_h5_file):
     assert 'dtype: (count: uint64, amount: float32)' in out
     assert re.search(r'\(\s*3\s*,\s*0.09\s*\)', out)
 
+def test_custom_float(file_with_custom_float):
+    sio = io.StringIO()
+    terminal.print_dataset_info(file_with_custom_float["a"], file=sio)
+    out = sio.getvalue()
+    assert 'dtype: custom 2-byte float' in out
+
 def test_vlen_types(simple_h5_file):
     sio = io.StringIO()
     terminal.print_dataset_info(simple_h5_file["prose"], file=sio)
