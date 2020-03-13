@@ -1,51 +1,50 @@
+from functools import lru_cache
 from h5py import h5t
 import numpy as np
 from .utils import fmt_shape
 
 cset_names = {h5t.CSET_ASCII: 'ASCII', h5t.CSET_UTF8: 'UTF-8'}
 
-_std_numeric_dtypes = None
+# h5py TypeIDs are not consistently hashable, so we can't use them as dict keys.
+# Instead, we look up by size, and then check equality with the standard types.
+@lru_cache()
+def int_types_by_size():
+    d = {}
+    for tc in np.typecodes['AllInteger']:
+        _add_typecode(tc, d)
+    return d
 
+@lru_cache()
+def float_types_by_size():
+    d = {}
+    for tc in np.typecodes['Float']:
+        _add_typecode(tc, d)
+    return d
 
-class StdNumerics:
-    """Quick lookup for standard numeric datatypes
+def _add_typecode(tc, sizes_dict):
+    dt_le = np.dtype('<' + tc)
+    dt_be = np.dtype('>' + tc)
 
-    covers signed & unsigned ints, floats & complex, as defined in numpy.
-    """
-    def __init__(self):
-        self.by_size = {}
-
-        for tc in np.typecodes['AllInteger'] + np.typecodes['AllFloat']:
-            dt_le = np.dtype('<' + tc)
-            dt_be = np.dtype('>' + tc)
-
-            entries = self.by_size.setdefault(dt_le.itemsize, [])
-            entries.append((h5t.py_create(dt_le), dt_le.name))
-            entries.append((h5t.py_create(dt_be), dt_be.name + ' (big-endian)'))
-
-    def lookup(self, hdf_dt, size):
-        for candidate, descr in self.by_size.get(size, ()):
-            if hdf_dt == candidate:
-                return descr
+    entries = sizes_dict.setdefault(dt_le.itemsize, [])
+    entries.append((h5t.py_create(dt_le), dt_le.name))
+    entries.append((h5t.py_create(dt_be), dt_be.name + ' (big-endian)'))
 
 
 def fmt_dtype(hdf_dt):
     """Get a (preferably short) string describing an HDF5 datatype"""
-    global _std_numeric_dtypes
-
-    if _std_numeric_dtypes is None:
-        _std_numeric_dtypes = StdNumerics()
-
     size = hdf_dt.get_size()
 
-    # Check most common cases, e.g. uint16 or float64
-    res = _std_numeric_dtypes.lookup(hdf_dt, size)
-    if res is not None:
-        return res
-
     if isinstance(hdf_dt, h5t.TypeIntegerID):
+        # Check normal int & uint dtypes first
+        for candidate, descr in int_types_by_size().get(size):
+            if hdf_dt == candidate:
+                return descr
         return "custom {}-byte integer".format(size)
     elif isinstance(hdf_dt, h5t.TypeFloatID):
+        # Check normal float dtypes first
+        for candidate, descr in float_types_by_size().get(size):
+            if hdf_dt == candidate:
+                return descr
         return "custom {}-byte float".format(size)
     elif isinstance(hdf_dt, h5t.TypeBitfieldID):
         return "{}-byte bitfield"
