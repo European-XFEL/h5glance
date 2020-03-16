@@ -39,6 +39,14 @@ def test_dataset_info(simple_h5_file):
     assert 'dtype: float32' in out
     assert 'shape: 2 × 128 × 500' in out
 
+def test_dataset_slice(simple_h5_file):
+    sio = io.StringIO()
+    terminal.print_dataset_info(simple_h5_file["/group1/subgroup1/dataset2"],
+                                slice_expr='0,0,5:9', file=sio)
+    out = sio.getvalue()
+    assert '[0,0,5:9]' in out
+    assert '[0. 0. 0. 0.]' in out
+
 def test_compound_types(simple_h5_file):
     sio = io.StringIO()
     terminal.print_dataset_info(simple_h5_file["compound"], file=sio)

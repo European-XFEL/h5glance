@@ -54,7 +54,7 @@ def fmt_attr(key, attrs):
             sv = sv[:20] + '...' + sv[-20:]
     return sv
 
-def print_dataset_info(ds: h5py.Dataset, file=None):
+def print_dataset_info(ds: h5py.Dataset, slice_expr=None, file=None):
     """Print detailed information for an HDF5 dataset."""
     print('      dtype:', fmt_dtype(ds.dtype), file=file)
     print('      shape:', fmt_shape(ds.shape), file=file)
@@ -67,10 +67,19 @@ def print_dataset_info(ds: h5py.Dataset, file=None):
         print('compression: {} (options: {})'
               .format(ds.compression, ds.compression_opts), file=file)
 
+    numpy.set_printoptions(threshold=numpy.inf)
     if sys.stdout.isatty():
         numpy.set_printoptions(linewidth=get_terminal_size()[0])
 
-    if ds.size and ds.size > 0:  # size is None for empty datasets
+    if slice_expr:
+        print("\nselected data [{}]:".format(slice_expr), file=file)
+        try:
+            arr = eval('ds[{}]'.format(slice_expr), {'ds': ds})
+        except Exception as e:
+            print("Error slicing", e, file=file)
+        else:
+            print(arr, file=file)
+    elif ds.size and ds.size > 0:  # size is None for empty datasets
         print('\nsample data:', file=file)
         if ds.ndim == 0:
             print(ds[()], file=file)
@@ -207,7 +216,7 @@ def page(text):
     pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
     run(pager_cmd, input=text.encode('utf-8'))
 
-def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
+def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=None):
     """Display information on an HDF5 file, group or dataset
 
     This is the central function for the h5glance command line tool.
@@ -221,11 +230,13 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False):
         obj = file
 
     if isinstance(obj, h5py.Group):
+        if slice_expr is not None:
+            sys.exit("Slicing is only allowed for datasets")
         tvb = TreeViewBuilder(expand_attrs=expand_attrs)
         print_tree(tvb.object_node(obj, root), file=sio)
     elif isinstance(obj, h5py.Dataset):
         print(root, file=sio)
-        print_dataset_info(obj, file=sio)
+        print_dataset_info(obj, slice_expr, file=sio)
     else:
         sys.exit("What is this? " + repr(obj))
 
@@ -298,6 +309,10 @@ def main(argv=None):
     ap.add_argument('--attrs', action='store_true',
         help="Show attributes of groups",
     )
+    ap.add_argument('-s', '--slice',
+        help="Select part of a dataset to examine, using Python slicing and "
+             "indexing as for a numpy array, e.g. 0,100:110",
+    )
     ap.add_argument('--version', action='version',
                     version='H5glance {}'.format(__version__))
 
@@ -315,4 +330,4 @@ def main(argv=None):
         path = prompt_for_path(args.file)
 
     with h5py.File(args.file, 'r') as f:
-        display_h5_obj(f, path, expand_attrs=args.attrs)
+        display_h5_obj(f, path, slice_expr=args.slice, expand_attrs=args.attrs)
