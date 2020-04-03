@@ -36,13 +36,14 @@ def fmt_dtype(hdf_dt):
 
     if isinstance(hdf_dt, h5t.TypeIntegerID):
         # Check normal int & uint dtypes first
-        for candidate, descr in int_types_by_size().get(size):
+        for candidate, descr in int_types_by_size().get(size, ()):
             if hdf_dt == candidate:
                 return descr
-        return "custom {}-byte integer".format(size)
+        un = 'un' if hdf_dt.get_sign() == h5t.SGN_NONE else ''
+        return "{}-byte {}signed integer".format(size, un)
     elif isinstance(hdf_dt, h5t.TypeFloatID):
         # Check normal float dtypes first
-        for candidate, descr in float_types_by_size().get(size):
+        for candidate, descr in float_types_by_size().get(size, ()):
             if hdf_dt == candidate:
                 return descr
         return "custom {}-byte float".format(size)
@@ -81,9 +82,10 @@ def fmt_dtype(hdf_dt):
         if nmembers >= 5:
             return "enum ({} options)".format(nmembers)
         else:
-            return "enum " + ", ".join(
-                hdf_dt.get_member_name(i) for i in range(nmembers)
-            )
+            return "enum ({})".format(", ".join(
+                hdf_dt.get_member_name(i).decode('utf-8', 'replace')
+                for i in range(nmembers)
+            ))
     elif isinstance(hdf_dt, h5t.TypeReferenceID):
         return "region ref" if hdf_dt == h5t.STD_REF_DSETREG else "object ref"
 
