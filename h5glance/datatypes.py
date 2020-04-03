@@ -88,3 +88,26 @@ def fmt_dtype(hdf_dt):
         return "region ref" if hdf_dt == h5t.STD_REF_DSETREG else "object ref"
 
     return "unrecognised {}-byte datatype".format(size)
+
+
+def dtype_description(hdf_dt):
+    """A slightly longer description, suitable for a tooltip
+
+    Can return None
+    """
+    size = hdf_dt.get_size()
+
+    if isinstance(hdf_dt, h5t.TypeIntegerID):
+        # Check normal int & uint dtypes first
+        for candidate, descr in int_types_by_size().get(size, ()):
+            if hdf_dt == candidate:
+                un = 'un' if hdf_dt.get_sign() == h5t.SGN_NONE else ''
+                return '{}-bit {}signed integer'.format(size * 8, un)
+
+    elif isinstance(hdf_dt, h5t.TypeFloatID):
+        # Check normal float dtypes first
+        for candidate, descr in float_types_by_size().get(size, ()):
+            if hdf_dt == candidate:
+                return '{}-bit floating point'.format(size * 8)
+
+    return None
