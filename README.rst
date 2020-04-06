@@ -3,6 +3,10 @@
 .. image:: https://travis-ci.org/European-XFEL/h5glance.svg?branch=master
     :target: https://travis-ci.org/European-XFEL/h5glance
 
+Install it with::
+
+    pip install h5glance
+
 In the terminal, you can get a tree view of a file::
 
     $ h5glance sample.h5
@@ -26,14 +30,16 @@ Inspect a group or dataset inside it::
     sample data:
     [[-0.27756437  0.36923643 -0.28113527 ...
 
-Use ``-`` as the second argument, and you can enter the path with tab
-completion::
+In bash & zsh, h5glance offers tab-completion for the paths inside HDF5 files.
+To set this up, run::
+
+    python -m h5glance.completer
+
+Alternatively, use ``-`` as the second argument, and h5glance will prompt you
+for the object path with tab completion::
 
     $ h5glance sample.h5 -
     Object path: sample.h5/  # try tapping tab
-
-Or run ``python -m h5glance.completer`` to install tab completion hooks for bash
-and zsh.
 
 HTML interface
 --------------
