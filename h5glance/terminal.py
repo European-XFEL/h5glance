@@ -12,23 +12,8 @@ from shutil import get_terminal_size
 from subprocess import run
 import sys
 
+from .datatypes import fmt_dtype
 from .utils import fmt_shape
-
-def fmt_dtype(dtype):
-    if dtype.metadata and 'vlen' in dtype.metadata:
-        base_dtype = dtype.metadata['vlen']
-        if base_dtype is str:
-            return 'UTF-8 str'
-        elif base_dtype is bytes:
-            return 'ASCII str'
-        else:
-            return 'vlen {}'.format(fmt_dtype(base_dtype))
-    elif dtype.fields:
-        fields = ['{}: {}'.format(name, fmt_dtype(dtype.fields[name][0]))
-                  for name in dtype.names]
-        return '({})'.format(', '.join(fields))
-    else:
-        return dtype.name
 
 layout_names = {
     h5py.h5d.COMPACT: 'Compact',
@@ -38,25 +23,36 @@ layout_names = {
 }
 
 def fmt_attr(key, attrs):
-    try:
-        v = attrs[key]
-    except Exception:
-        return "<Unable to read attribute>"
+    """Format an attribute to show on a single line"""
+    attr = attrs.get_id(key)
+    shape = attr.shape
+    hdf_dt = attr.get_type()
 
-    if isinstance(v, numpy.ndarray):
-        if v.ndim < 2:
-            sv = numpy.array2string(v, precision=5, threshold=10)
+    if shape is None:
+        return "empty [{}]".format(fmt_dtype(hdf_dt))
+
+    if len(shape) <= 1:
+        # For very small attributes, try to show the data inline
+        try:
+            v = attrs[key]
+        except Exception:
+            return "unreadable [{}: {}]".format(fmt_dtype(hdf_dt), shape)
         else:
-            sv = 'array [{}: {}]'.format(fmt_dtype(v.dtype), fmt_shape(v.shape))
-    else:
-        sv = repr(v)
-        if len(sv) > 50:
-            sv = sv[:20] + '...' + sv[-20:]
-    return sv
+            if isinstance(v, numpy.ndarray):
+                return numpy.array2string(v, precision=5, threshold=10)
+
+            sv = repr(v)  # single values, inc. strings
+            if len(sv) > 50:
+                sv = sv[:20] + '...' + sv[-20:]
+            return sv
+
+    # >= 2 dims
+    return 'array [{}: {}]'.format(fmt_dtype(hdf_dt), shape)
+
 
 def print_dataset_info(ds: h5py.Dataset, slice_expr=None, file=None):
     """Print detailed information for an HDF5 dataset."""
-    print('      dtype:', fmt_dtype(ds.dtype), file=file)
+    print('      dtype:', fmt_dtype(ds.id.get_type()), file=file)
     print('      shape:', fmt_shape(ds.shape), file=file)
     if ds.shape:  # Skip maxshape for scalar & empty datasets
         print('   maxshape:', fmt_shape(ds.maxshape), file=file)
@@ -155,7 +151,7 @@ class TreeViewBuilder:
 
         if isinstance(obj, h5py.Dataset):
             detail = '\t[{dt}: {shape}]'.format(
-                dt=fmt_dtype(obj.dtype),
+                dt=fmt_dtype(obj.id.get_type()),
                 shape=fmt_shape(obj.shape),
             )
             if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:

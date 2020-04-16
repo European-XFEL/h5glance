@@ -4,6 +4,7 @@ from htmlgen import (Document, Element, Division, UnorderedList, Checkbox,
                      )
 from pathlib import Path
 
+from .datatypes import fmt_dtype, dtype_description
 from . import utils
 
 _PKGDIR = Path(__file__).parent
@@ -43,18 +44,11 @@ dtype_kind_to_descr = {
     "O": "object (e.g. string)",
 }
 
-def make_dtype_abbr(dtobj):
-    desc = ""
-    if dtobj.kind in "uifc":
-        desc += "{}-bit ".format(dtobj.itemsize * 8)
-    try:
-        desc += dtype_kind_to_descr[dtobj.kind]
-    except KeyError:
-        pass
-    code = Code(dtobj.str)
+def make_dtype_abbr(hdf_dt):
+    desc = dtype_description(hdf_dt)
     if desc:
-        return Abbreviation(code, title=desc)
-    return code
+        return Abbreviation(fmt_dtype(hdf_dt), title=desc)
+    return fmt_dtype(hdf_dt)
 
 def make_list(*items):
     ul = UnorderedList()
@@ -83,7 +77,7 @@ def item_for_dataset(name, ds):
     copylink.add_css_classes("h5glance-dataset-copylink")
     li = ListItem(
         namespan,  " ", copylink, ": ",
-        shape, " entries, dtype: ", make_dtype_abbr(ds.dtype)
+        shape, " entries, dtype: ", make_dtype_abbr(ds.id.get_type())
     )
     li.add_css_classes("h5glance-dataset")
     return li

@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 @pytest.fixture(scope='module')
 def simple_h5_file():
     with TemporaryDirectory() as td:
-        f = h5py.File(os.path.join(td, 'example.h5'))
+        f = h5py.File(os.path.join(td, 'example.h5'), 'w')
         f.create_group('group1')
         f.create_dataset('group1/subgroup1/dataset1', (200,), dtype='u8')
         f.create_dataset('group1/subgroup1/dataset2', (2, 128, 500), dtype='f4')
@@ -26,3 +26,19 @@ def simple_h5_file():
         f['synonyms/values'] = f['group1/subgroup1/dataset1']
         yield f
         f.close()
+
+@pytest.fixture()
+def file_with_custom_float(tmp_path):
+    # create a custom type with larger bias
+    mytype = h5py.h5t.IEEE_F16LE.copy()
+    mytype.set_fields(14, 9, 5, 0, 9)
+    mytype.set_size(2)
+    mytype.set_ebias(53)
+    mytype.lock()
+
+    shape = (3, 4)
+    space = h5py.h5s.create_simple(shape)
+
+    with h5py.File(str(tmp_path / 'sample.h5'), 'w') as f:
+        h5py.h5d.create(f.id, b'a', mytype, space)
+        yield f

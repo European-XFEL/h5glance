@@ -10,7 +10,7 @@ maintainer = "Thomas Kluyver"
 home-page = "https://github.com/European-XFEL/h5glance"
 description-file = "README.rst"
 requires = [
-    "h5py",
+    "h5py >=2.10",
     "htmlgen",
 ]
 requires-python = ">=3.5"
