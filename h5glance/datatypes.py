@@ -48,11 +48,11 @@ def fmt_dtype(hdf_dt):
                 return descr
         return "custom {}-byte float".format(size)
     elif isinstance(hdf_dt, h5t.TypeBitfieldID):
-        return "{}-byte bitfield"
+        return "{}-byte bitfield".format(size)
     elif isinstance(hdf_dt, h5t.TypeTimeID):
         return "time"  # NB. time datatype is deprecated
     elif isinstance(hdf_dt, h5t.TypeOpaqueID):
-        s = "{}-byte opaque"
+        s = "{}-byte opaque".format(size)
         tag = hdf_dt.get_tag()
         if tag:
             s += ' ({})'.format(tag.decode('utf-8', 'replace'))
