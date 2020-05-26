@@ -59,7 +59,9 @@ development. Why might you choose H5Glance?
 - Practical terminal interface: if you're working in a terminal, it's much
   quicker to use something there than to start a GUI application and click
   through it.
+
   - Tab completions are part of this - take a moment to set them up (see above).
+
 - Static Jupyter views: H5Glance shows your HDF5 objects in simple HTML, which
   doesn't talk to the server. Export your notebook to HTML, or `view it on
   nbviewer <https://nbviewer.jupyter.org/github/European-XFEL/h5glance/blob/master/Demo.ipynb>`_,
