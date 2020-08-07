@@ -157,7 +157,7 @@ class TreeViewBuilder:
             if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
                 detail += ' virtual'
         elif isinstance(obj, h5py.Group):
-            if max_depth > 1:
+            if max_depth >= 1:
                 children += [self.group_item_node(obj, key, max_depth - 1)
                              for key in obj]
             else:
