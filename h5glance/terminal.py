@@ -204,6 +204,13 @@ def print_tree(node, prefix1='', prefix2='', file=None):
         c_prefix2 = prefix2 + ('  ' if islast else '│ ')
         print_tree(node, prefix1=c_prefix1, prefix2=c_prefix2, file=file)
 
+def group_to_str(grp: h5py.Group, expand_attrs=False):
+    sio = io.StringIO()
+    tvb = TreeViewBuilder(expand_attrs=expand_attrs)
+    root = grp.file.filename + '/' + grp.name.lstrip('/')
+    print_tree(tvb.object_node(grp, root), file=sio)
+    return sio.getvalue()
+
 def page(text):
     """Display text in a terminal pager
 
