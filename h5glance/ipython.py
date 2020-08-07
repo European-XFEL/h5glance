@@ -12,7 +12,7 @@ class H5Glance:
         return h5obj_to_html(self.obj)
 
     def __repr__(self):
-        return group_to_str(self.obj)
+        return group_to_str(self.obj, max_depth=1)
 
 def install_ipython_h5py_display(html=True, text=True):
     """Call inside IPython to install HTML/text views for h5py groups and files"""
