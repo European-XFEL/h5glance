@@ -27,6 +27,7 @@ def install_ipython_h5py_display(html=True, text=True):
     if text:
         text_formatter = ip.display_formatter.formatters['text/plain']
         text_formatter.for_type(h5py.Group, pretty_print_group)
+        text_formatter.for_type(h5py.File, pretty_print_group)
 
 def pretty_print_group(obj, p, cycle):
     p.text(group_to_str(obj))
