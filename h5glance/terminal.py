@@ -211,7 +211,7 @@ def group_to_str(grp: h5py.Group, expand_attrs=False, max_depth=1):
     sio = io.StringIO()
     tvb = TreeViewBuilder(expand_attrs=expand_attrs)
     root = grp.file.filename + '/' + grp.name.lstrip('/')
-    print_tree(tvb.object_node(grp, root), file=sio)
+    print_tree(tvb.object_node(grp, root, max_depth=max_depth), file=sio)
     return sio.getvalue()
 
 def page(text):
