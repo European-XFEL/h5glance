@@ -119,7 +119,7 @@ class TreeViewBuilder:
             self.colors = ColorsNone
         self.visited = dict()
 
-    def object_node(self, obj, name):
+    def object_node(self, obj, name, max_depth=numpy.inf):
         """Build a tree node for an HDF5 group/dataset
         """
         color_stop = self.colors.reset
@@ -157,14 +157,17 @@ class TreeViewBuilder:
             if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
                 detail += ' virtual'
         elif isinstance(obj, h5py.Group):
-            children += [self.group_item_node(obj, key)
-                         for key in obj]
+            if max_depth >= 1:
+                children += [self.group_item_node(obj, key, max_depth - 1)
+                             for key in obj]
+            else:
+                detail = f'\t({len(obj)} children)'
         else:
             detail = ' (unknown h5py type)'
 
         return (color_start + name + color_stop + detail + attr_detail), children
 
-    def group_item_node(self, group, key):
+    def group_item_node(self, group, key, max_depth=numpy.inf):
         """Build a tree node for one key in a group"""
         link = group.get(key, getlink=True)
         if isinstance(link, h5py.SoftLink):
@@ -172,7 +175,7 @@ class TreeViewBuilder:
         elif isinstance(link, h5py.ExternalLink):
             target = '{}/{}'.format(link.filename, link.path)
         else:
-            return self.object_node(group[key], key)
+            return self.object_node(group[key], key, max_depth=max_depth)
 
         line = '{}{}{}\t-> {}'.format(
             self.colors.link, key, self.colors.reset, target)
@@ -203,6 +206,13 @@ def print_tree(node, prefix1='', prefix2='', file=None):
         c_prefix1 = prefix2 + ('└'  if islast else '├')
         c_prefix2 = prefix2 + ('  ' if islast else '│ ')
         print_tree(node, prefix1=c_prefix1, prefix2=c_prefix2, file=file)
+
+def group_to_str(grp: h5py.Group, expand_attrs=False, max_depth=1):
+    sio = io.StringIO()
+    tvb = TreeViewBuilder(expand_attrs=expand_attrs)
+    root = grp.file.filename + '/' + grp.name.lstrip('/')
+    print_tree(tvb.object_node(grp, root, max_depth=max_depth), file=sio)
+    return sio.getvalue()
 
 def page(text):
     """Display text in a terminal pager

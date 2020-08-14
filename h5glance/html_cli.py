@@ -8,7 +8,7 @@ import sys
 import threading
 import webbrowser
 
-from .generate import make_document
+from .html import make_document
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="h5glance",
