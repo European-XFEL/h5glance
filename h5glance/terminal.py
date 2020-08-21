@@ -330,7 +330,7 @@ class MaybePagedOutput(io.TextIOBase):
 
     def _start_pager(self):
         pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
-        self._popen = Popen(pager_cmd, stdin=PIPE, text=True)
+        self._popen = Popen(pager_cmd, stdin=PIPE, universal_newlines=True)
         self.stream = self._popen.stdin
         self._dump_buffer()
 
