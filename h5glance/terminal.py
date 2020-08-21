@@ -9,7 +9,7 @@ import numpy
 from pathlib import Path
 import shlex
 from shutil import get_terminal_size
-from subprocess import run
+from subprocess import PIPE, Popen, run
 import sys
 
 from .datatypes import fmt_dtype
@@ -181,6 +181,91 @@ class TreeViewBuilder:
             self.colors.link, key, self.colors.reset, target)
         return line, []
 
+
+class TreePrinter:
+    """Print HDF5 groups (& optionally attributes) as a tree.
+    """
+    def __init__(self, file=None, expand_attrs=False):
+        self.file = file or sys.stdout
+        self.expand_attrs = expand_attrs
+        if use_colors():
+            self.colors = ColorsDefault
+        else:
+            self.colors = ColorsNone
+        self.prefixes = []
+        self.visited = dict()
+
+    def object_node(self, obj, name, max_depth=numpy.inf, _prefix1='', _prefix2=''):
+        """Build a tree node for an HDF5 group/dataset
+        """
+        color_stop = self.colors.reset
+        if isinstance(obj, h5py.Dataset):
+            color_start = self.colors.dataset
+        elif isinstance(obj, h5py.Group):
+            color_start = self.colors.group
+        else:
+            color_start = ''
+
+        obj_id = h5py.h5o.get_info(obj.id).addr
+
+        if obj_id in self.visited:
+            # Hardlink to an object we've seen before
+            first_link = self.visited[obj_id]
+            print(f'{_prefix1}{color_start}{name}{color_stop}\t= {first_link}', file=self.file)
+            return
+
+        # An object we haven't seen before
+        self.visited[obj_id] = obj.name
+
+        children = []
+        detail = ''
+
+        if isinstance(obj, h5py.Dataset):
+            detail = '\t[{dt}: {shape}]'.format(
+                dt=fmt_dtype(obj.id.get_type()),
+                shape=fmt_shape(obj.shape),
+            )
+            if obj.id.get_create_plist().get_layout() == h5py.h5d.VIRTUAL:
+                detail += ' virtual'
+        elif isinstance(obj, h5py.Group):
+            if max_depth < 1:
+                detail = f'\t({len(obj)} children)'
+        else:
+            detail = ' (unknown h5py type)'
+
+        nattr = len(obj.attrs)
+        if nattr and not self.expand_attrs:
+            detail += f' ({nattr} attributes)'
+
+        print(f'{_prefix1}{color_start}{name}{color_stop}{detail}', file=self.file)
+
+        if nattr and self.expand_attrs:
+            print(f'{_prefix2}└{nattr} attributes:')
+            for i, k in enumerate(obj.attrs):
+                attr_prefix = _prefix2 + '  ' + ('└' if nattr == i + 1 else '├')
+                print(f'{attr_prefix}{k}: {fmt_attr(k, obj.attrs)}')
+
+        if isinstance(obj, h5py.Group) and max_depth >= 1:
+            nchild = len(obj)
+            for i, k in enumerate(obj):
+                islast = (nchild == i + 1)
+                c_prefix1 = _prefix2 + ('└' if islast else '├')
+                c_prefix2 = _prefix2 + ('  ' if islast else '│ ')
+                self.group_item_node(obj, k, max_depth=max_depth - 1, _prefix1=c_prefix1, _prefix2=c_prefix2)
+
+    def group_item_node(self, group, key, max_depth=numpy.inf, _prefix1='', _prefix2=''):
+        """Build a tree node for one key in a group"""
+        link = group.get(key, getlink=True)
+        if isinstance(link, h5py.SoftLink):
+            target = link.path
+        elif isinstance(link, h5py.ExternalLink):
+            target = '{}/{}'.format(link.filename, link.path)
+        else:
+            return self.object_node(group[key], key, max_depth=max_depth,
+                                    _prefix1=_prefix1, _prefix2=_prefix2)
+
+        print(f'{_prefix1}{self.colors.link}{key}{self.colors.reset}\t-> {target}', file=self.file)
+
 def attrs_tree_nodes(obj):
     """Build tree nodes for attributes"""
     nattr = len(obj.attrs)
@@ -222,12 +307,61 @@ def page(text):
     pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
     run(pager_cmd, input=text.encode('utf-8'))
 
+
+class MaybePagedOutput(io.TextIOBase):
+    """Send output to a pager if it's long enough to fill the terminal.
+
+    Temporarily captures output until either it's long enough to fill the
+    terminal (when it's sent to the pager), or it's
+    """
+    buffer = None
+    _popen = None
+    lines_buffered = terminal_rows = 0
+
+    def __init__(self):
+        if sys.stdout.isatty():
+            self.buffer = io.StringIO()
+            _, self.terminal_rows = get_terminal_size()
+        self.stream = sys.stdout
+
+    def _dump_buffer(self):
+        self.stream.write(self.buffer.getvalue())
+        self.buffer = None
+
+    def _start_pager(self):
+        pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
+        self._popen = Popen(pager_cmd, stdin=PIPE, text=True)
+        self.stream = self._popen.stdin
+        self._dump_buffer()
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, s: str):
+        if self.buffer is None:
+            return self.stream.write(s)
+
+        n = self.buffer.write(s)
+        self.lines_buffered += s.count('\n')
+        if self.lines_buffered > self.terminal_rows:
+            self._start_pager()
+        return n
+
+    def close(self):
+        if self.buffer is not None:
+            self.stream.write(self.buffer.getvalue())
+            self.buffer = None
+        if self._popen is not None:
+            self._popen.stdin.close()
+            self._popen.wait()
+        super().close()
+
+
 def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=None):
     """Display information on an HDF5 file, group or dataset
 
     This is the central function for the h5glance command line tool.
     """
-    sio = io.StringIO()
     if path:
         root = file.filename + '/' + path.lstrip('/')
         obj = file[path]
@@ -235,26 +369,17 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=No
         root = file.filename
         obj = file
 
-    if isinstance(obj, h5py.Group):
-        if slice_expr is not None:
-            sys.exit("Slicing is only allowed for datasets")
-        tvb = TreeViewBuilder(expand_attrs=expand_attrs)
-        print_tree(tvb.object_node(obj, root), file=sio)
-    elif isinstance(obj, h5py.Dataset):
-        print(root, file=sio)
-        print_dataset_info(obj, slice_expr, file=sio)
-    else:
-        sys.exit("What is this? " + repr(obj))
-
-    # If the output has more lines than the terminal, display it in a pager
-    output = sio.getvalue()
-    if sys.stdout.isatty():
-        nlines = len(output.splitlines())
-        _, term_lines = get_terminal_size()
-        if nlines > term_lines:
-            return page(output)
-
-    print(output)
+    with MaybePagedOutput() as out:
+        if isinstance(obj, h5py.Group):
+            if slice_expr is not None:
+                sys.exit("Slicing is only allowed for datasets")
+            tvb = TreePrinter(expand_attrs=expand_attrs, file=out)
+            tvb.object_node(obj, root)
+        elif isinstance(obj, h5py.Dataset):
+            print(root, file=out)
+            print_dataset_info(obj, slice_expr, file=out)
+        else:
+            sys.exit("What is this? " + repr(obj))
 
 class H5Completer:
     """Readline tab completion for paths inside an HDF5 file"""
