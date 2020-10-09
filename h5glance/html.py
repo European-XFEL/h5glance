@@ -87,7 +87,10 @@ def item_for_link(name, link):
         target = f'{link.filename}/{link.path}'
     else:
         target = link.path
-    return ListItem(name, " → ", target)
+    copylink = Link("#", "[📋]")
+    copylink.set_attribute("data-hdf5-path", target)
+    copylink.add_css_classes("h5glance-dataset-copylink")
+    return ListItem(name, " → ", target, " ", copylink)
 
 def leaf_item(name, obj):
     if utils.is_dataset(obj):
