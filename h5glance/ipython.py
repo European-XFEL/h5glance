@@ -1,4 +1,5 @@
 import h5py
+import os
 
 from .html import h5obj_to_html
 from .terminal import group_to_str
@@ -12,6 +13,9 @@ class H5Glance:
         return h5obj_to_html(self.obj)
 
     def __repr__(self):
+        if isinstance(self.obj, (str, bytes, os.PathLike)):
+            with h5py.File(self.obj, 'r') as f:
+                return repr(H5Glance(f))
         return group_to_str(self.obj, max_depth=1)
 
 def install_ipython_h5py_display(html=True, text=True):

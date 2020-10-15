@@ -82,17 +82,36 @@ def item_for_dataset(name, ds):
     li.add_css_classes("h5glance-dataset")
     return li
 
+def item_for_link(name, link):
+    if isinstance(link, h5py.ExternalLink):
+        target = f'{link.filename}/{link.path}'
+    else:
+        target = link.path
+    return ListItem(name, " → ", target)
+
+def leaf_item(name, obj):
+    if utils.is_dataset(obj):
+        return item_for_dataset(name, obj)
+    else:
+        return item_for_link(name, obj)
+
 def item_for_group(gname, grp):
-    subgroups, datasets = [], []
-    for name, obj in sorted(grp.items()):
-        if utils.is_group(obj):
-            subgroups.append((name, obj))
+    # Like many file managers, we'll sort
+    subgroups, items = [], []
+    for name in grp:
+        link = grp.get(name, getlink=True)
+        if isinstance(link, h5py.HardLink):
+            obj = grp[name]
+            if utils.is_group(obj):
+                subgroups.append((name, obj))
+            else:
+                items.append((name, obj))
         else:
-            datasets.append((name, obj))
+            items.append((name, link))
 
     return ListItem(*checkbox_w_label(gname), make_list(
         *[item_for_group(n, g) for n, g in subgroups],
-        *[item_for_dataset(n, d) for n, d in datasets],
+        *[leaf_item(n, o) for n, o in items],
     ))
 
 def file_or_grp_name(obj):
