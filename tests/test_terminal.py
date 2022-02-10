@@ -76,6 +76,17 @@ def test_hard_links(simple_h5_file):
     assert 'folder\t= /group1/subgroup1' in out
     assert 'values\t= /group1/subgroup1/dataset1' in out
 
+def test_max_depth(simple_h5_file):
+    sio = io.StringIO()
+    tvb = terminal.TreeViewBuilder()
+    tree = tvb.object_node(simple_h5_file, simple_h5_file.filename, max_depth=2)
+    terminal.print_tree(tree, file=sio)
+    out = sio.getvalue()
+    assert 'prose\t[UTF-8 string: 2]' in out  # depth=0
+    assert 'scalar\t[int32: scalar]' in out  # depth=1
+    assert 'subgroup1\t(2 children)' in out  # depth=2
+    assert 'dataset1\t[uint64: 200]' not in out  # depth=3
+
 def test_completer(simple_h5_file):
     comp = terminal.H5Completer(simple_h5_file)
     # Complete groups

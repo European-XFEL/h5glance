@@ -222,7 +222,8 @@ def page(text):
     pager_cmd = shlex.split(os.environ.get('PAGER') or 'less -r')
     run(pager_cmd, input=text.encode('utf-8'))
 
-def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=None):
+def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=None,
+                   max_depth=numpy.inf):
     """Display information on an HDF5 file, group or dataset
 
     This is the central function for the h5glance command line tool.
@@ -239,7 +240,7 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=No
         if slice_expr is not None:
             sys.exit("Slicing is only allowed for datasets")
         tvb = TreeViewBuilder(expand_attrs=expand_attrs)
-        print_tree(tvb.object_node(obj, root), file=sio)
+        print_tree(tvb.object_node(obj, root, max_depth=max_depth), file=sio)
     elif isinstance(obj, h5py.Dataset):
         print(root, file=sio)
         print_dataset_info(obj, slice_expr, file=sio)
@@ -315,6 +316,8 @@ def main(argv=None):
     ap.add_argument('--attrs', action='store_true',
         help="Show attributes of groups",
     )
+    ap.add_argument('-d', '--depth', default=numpy.inf, type=numpy.float,
+        help='Show group children only up to a certain depth, all by default.')
     ap.add_argument('-s', '--slice',
         help="Select part of a dataset to examine, using Python slicing and "
              "indexing as for a numpy array, e.g. 0,100:110",
@@ -336,4 +339,5 @@ def main(argv=None):
         path = prompt_for_path(args.file)
 
     with h5py.File(args.file, 'r') as f:
-        display_h5_obj(f, path, slice_expr=args.slice, expand_attrs=args.attrs)
+        display_h5_obj(f, path, slice_expr=args.slice, expand_attrs=args.attrs,
+                       max_depth=args.depth)
