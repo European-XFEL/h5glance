@@ -65,7 +65,7 @@ def test_vlen_types(simple_h5_file):
     terminal.print_dataset_info(simple_h5_file["prose"], file=sio)
     out = sio.getvalue()
     assert 'dtype: UTF-8 str' in out
-    assert "['Lorem ipsum dolor sit amet' 'consectetur adipiscing elit']" in out
+    assert "[b'Lorem ipsum dolor sit amet' b'consectetur adipiscing elit']" in out
 
 def test_hard_links(simple_h5_file):
     sio = io.StringIO()
