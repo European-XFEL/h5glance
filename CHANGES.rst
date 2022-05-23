@@ -1,3 +1,15 @@
+0.8
+---
+
+* Add ``--depth`` or ``-d`` option to limit the depth shown in the terminal.
+  https://github.com/European-XFEL/h5glance/pull/27
+* Show a single layer of HDF5 groups in IPython in the terminal
+  * Show a single layer of
+* Show soft & external HDF5 links in HTML views
+  https://github.com/European-XFEL/h5glance/pull/24
+* Allow selecting text in HTML views
+  https://github.com/European-XFEL/h5glance/commit/2001a25a0d0b517257bfde5fb59a6d2ad4101c6e
+
 0.7
 ---
 
