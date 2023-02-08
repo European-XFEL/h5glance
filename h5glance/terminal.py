@@ -316,7 +316,7 @@ def main(argv=None):
     ap.add_argument('--attrs', action='store_true',
         help="Show attributes of groups",
     )
-    ap.add_argument('-d', '--depth', default=numpy.inf, type=numpy.float,
+    ap.add_argument('-d', '--depth', default=numpy.inf, type=numpy.cfloat,
         help='Show group children only up to a certain depth, all by default.')
     ap.add_argument('-s', '--slice',
         help="Select part of a dataset to examine, using Python slicing and "
