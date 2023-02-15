@@ -1,3 +1,10 @@
+0.8.1
+-----
+
+* Fix compatibility with NumPy >= 1.24
+  https://github.com/European-XFEL/h5glance/pull/30
+* Minimum required Python is now 3.7
+
 0.8
 ---
 
