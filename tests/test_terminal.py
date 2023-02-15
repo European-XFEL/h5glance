@@ -1,6 +1,9 @@
 import io
 import os
 import re
+import sys
+from subprocess import run, PIPE
+
 import pytest
 
 from h5glance import terminal
@@ -95,3 +98,19 @@ def test_completer(simple_h5_file):
     assert set(comp.completions('group1/subgroup2/')) == {'group1/subgroup2/dataset1'}
     # Case insensitive completion
     assert set(comp.completions('GRO')) == {'group1/'}
+
+def test_cli(closed_h5_file):
+    res = run([
+        sys.executable, '-m', 'h5glance', str(closed_h5_file)
+    ], stdout=PIPE, stderr=PIPE)
+    if res.stderr != b'':
+        print("--- subprocess stderr ---")
+        print(res.stderr.decode())
+        print("-------------------------")
+    assert res.returncode == 0
+    assert res.stderr == b''
+    stdout = res.stdout.decode()
+    # This is basically a smoketest, but check a few pieces of output
+    assert 'subgroup1' in stdout
+    assert 'synonyms' in stdout
+    assert 'scalar' in stdout

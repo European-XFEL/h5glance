@@ -26,7 +26,7 @@ def main(argv=None):
         sys.exit(2)
 
     if args.write:
-        with open("test_output.html", 'w') as f:
+        with open(args.write, 'w') as f:
             f.write(str(make_document(args.input)))
             return
 

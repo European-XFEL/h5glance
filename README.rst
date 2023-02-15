@@ -1,8 +1,5 @@
 **H5Glance** lets you explore HDF5 files in the terminal or an HTML interface.
 
-.. image:: https://travis-ci.org/European-XFEL/h5glance.svg?branch=master
-    :target: https://travis-ci.org/European-XFEL/h5glance
-
 Install it with::
 
     pip install h5glance
