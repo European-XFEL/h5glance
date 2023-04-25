@@ -76,13 +76,15 @@ def print_dataset_info(ds: h5py.Dataset, slice_expr=None, file=None):
         else:
             print(arr, file=file)
     elif ds.size and ds.size > 0:  # size is None for empty datasets
-        print('\nsample data:', file=file)
         if ds.ndim == 0:
+            print('\ndata:', file=file)
             print(ds[()], file=file)
         elif ds.ndim == 1:
+            print('\nsample data:', file=file)
             print(ds[:10], file=file)
         else:
             select = (0,) * (ds.ndim - 2) + (slice(0, 10),) * 2
+            print('\nsample data:', file=file)
             print(ds[select], file=file)
 
     print('\n{} attributes:'.format(len(ds.attrs)), file=file)
