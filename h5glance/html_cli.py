@@ -11,11 +11,14 @@ import webbrowser
 from .html import make_document
 
 def main(argv=None):
+    from . import __version__
     ap = argparse.ArgumentParser(prog="h5glance",
                                  description="View HDF5 file structure in HTML")
     ap.add_argument("input", help="HDF5 file to view", type=Path)
     ap.add_argument("-w", "--write", metavar="HTML_FILE",
                     help="Write output to HTML file.")
+    ap.add_argument('--version', action='version',
+                    version='h5glance-html {}'.format(__version__))
     args = ap.parse_args(argv)
 
     if not args.input.is_file():
