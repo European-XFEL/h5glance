@@ -323,7 +323,7 @@ def main(argv=None):
              "indexing as for a numpy array, e.g. 0,100:110",
     )
     ap.add_argument('--version', action='version',
-                    version='H5glance {}'.format(__version__))
+                    version='h5glance {}'.format(__version__))
 
     args = ap.parse_args(argv)
 

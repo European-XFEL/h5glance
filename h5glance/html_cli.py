@@ -12,7 +12,7 @@ from .html import make_document
 
 def main(argv=None):
     from . import __version__
-    ap = argparse.ArgumentParser(prog="h5glance",
+    ap = argparse.ArgumentParser(prog="h5glance-html",
                                  description="View HDF5 file structure in HTML")
     ap.add_argument("input", help="HDF5 file to view", type=Path)
     ap.add_argument("-w", "--write", metavar="HTML_FILE",
