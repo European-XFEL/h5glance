@@ -251,13 +251,12 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=No
 
     output = sio.getvalue()
 
-    if use_pager:
-        # If the output has more lines than the terminal, display it in a pager
-        if sys.stdout.isatty():
-            nlines = len(output.splitlines())
-            _, term_lines = get_terminal_size()
-            if nlines > term_lines:
-                return page(output)
+    # If the output has more lines than the terminal, display it in a pager
+    if use_pager and sys.stdout.isatty():
+        nlines = len(output.splitlines())
+        _, term_lines = get_terminal_size()
+        if nlines > term_lines:
+            return page(output)
 
     print(output)
 
