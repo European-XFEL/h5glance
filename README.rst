@@ -14,6 +14,7 @@ In the terminal, you can get a tree view of a file::
 
 The names of datasets, groups and links are colour-coded by default.
 If you want to disable this, set the environment variable ``H5GLANCE_COLORS=0``.
+H5Glance also respects the `NO_COLOR convention <https://no-color.org/>`_.
 
 Inspect a group or dataset inside it::
 
