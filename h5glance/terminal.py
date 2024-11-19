@@ -106,6 +106,9 @@ def use_colors():
     env = os.environ.get('H5GLANCE_COLORS', '')
     if env:
         return env != '0'
+    # any non-empty string works for NO_COLOR - https://no-color.org/
+    if os.environ.get('NO_COLOR', ''):
+        return False
     return sys.stdout.isatty()
 
 class TreeViewBuilder:
