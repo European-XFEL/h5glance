@@ -1,3 +1,16 @@
+0.9
+---
+
+* New ``--no-pager`` option to disable output to a pager in the terminal
+  https://github.com/European-XFEL/h5glance/pull/41
+* Support for the common ``NO_COLOR`` environment variable to disable colours
+  https://github.com/European-XFEL/h5glance/pull/43
+* The ``h5glance-html`` command now supports ``--version``
+  https://github.com/European-XFEL/h5glance/pull/37
+* The data displayed from scalar datasets is no longer described as a sample
+  https://github.com/European-XFEL/h5glance/pull/38
+* Minimum required Python is now 3.9
+
 0.8.1
 -----
 
