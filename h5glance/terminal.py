@@ -225,7 +225,7 @@ def page(text):
     run(pager_cmd, input=text.encode('utf-8'))
 
 def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=None,
-                   max_depth=numpy.inf):
+                   max_depth=numpy.inf, use_pager=True):
     """Display information on an HDF5 file, group or dataset
 
     This is the central function for the h5glance command line tool.
@@ -249,9 +249,10 @@ def display_h5_obj(file: h5py.File, path=None, expand_attrs=False, slice_expr=No
     else:
         sys.exit("What is this? " + repr(obj))
 
-    # If the output has more lines than the terminal, display it in a pager
     output = sio.getvalue()
-    if sys.stdout.isatty():
+
+    # If the output has more lines than the terminal, display it in a pager
+    if use_pager and sys.stdout.isatty():
         nlines = len(output.splitlines())
         _, term_lines = get_terminal_size()
         if nlines > term_lines:
@@ -318,6 +319,10 @@ def main(argv=None):
     ap.add_argument('--attrs', action='store_true',
         help="Show attributes of groups",
     )
+    ap.add_argument('--pager', action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use a pager to display output if it is too long (default: on)",
+    )
     ap.add_argument('-d', '--depth', default=numpy.inf, type=float,
         help='Show group children only up to a certain depth, all by default.')
     ap.add_argument('-s', '--slice',
@@ -342,4 +347,4 @@ def main(argv=None):
 
     with h5py.File(args.file, 'r') as f:
         display_h5_obj(f, path, slice_expr=args.slice, expand_attrs=args.attrs,
-                       max_depth=args.depth)
+                       max_depth=args.depth, use_pager=args.pager)
