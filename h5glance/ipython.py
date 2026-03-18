@@ -1,7 +1,6 @@
 import h5py
 import os
 
-from .html import h5obj_to_html
 from .terminal import group_to_str
 
 class H5Glance:
@@ -10,6 +9,7 @@ class H5Glance:
         self.obj = obj
 
     def _repr_html_(self):
+        from .html import h5obj_to_html
         return h5obj_to_html(self.obj)
 
     def __repr__(self):
@@ -26,6 +26,7 @@ def install_ipython_h5py_display(html=True, text=True):
         raise EnvironmentError("This function is to be called in IPython")
 
     if html:
+        from .html import h5obj_to_html
         html_formatter = ip.display_formatter.formatters['text/html']
         html_formatter.for_type(h5py.Group, h5obj_to_html)
     if text:
