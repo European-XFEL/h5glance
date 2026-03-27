@@ -15,6 +15,8 @@ import sys
 from .datatypes import fmt_dtype
 from .utils import fmt_shape
 
+numpy.set_printoptions(legacy='1.25')
+
 layout_names = {
     h5py.h5d.COMPACT: 'Compact',
     h5py.h5d.CONTIGUOUS: 'Contiguous',
